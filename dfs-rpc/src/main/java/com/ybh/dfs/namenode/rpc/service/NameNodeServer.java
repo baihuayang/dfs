@@ -24,7 +24,7 @@ public final class NameNodeServer {
   static {
     String[] descriptorData = {
       "\n\027NameNodeRpcServer.proto\022\030com.ybh.dfs.n" +
-      "amenode.rpc\032\026NameNodeRpcModel.proto2\211\004\n\017" +
+      "amenode.rpc\032\026NameNodeRpcModel.proto2\364\006\n\017" +
       "NameNodeService\022a\n\010register\022).com.ybh.df" +
       "s.namenode.rpc.RegisterRequest\032*.com.ybh" +
       ".dfs.namenode.rpc.RegisterResponse\022d\n\the" +
@@ -37,9 +37,18 @@ public final class NameNodeServer {
       "t\032*.com.ybh.dfs.namenode.rpc.ShutdownRes" +
       "ponse\022p\n\rfetchEditsLog\022..com.ybh.dfs.nam" +
       "enode.rpc.FetchEditsLogRequest\032/.com.ybh" +
-      ".dfs.namenode.rpc.FetchEditsLogResponseB" +
-      "4\n com.ybh.dfs.namenode.rpc.serviceB\016Nam" +
-      "eNodeServerP\001b\006proto3"
+      ".dfs.namenode.rpc.FetchEditsLogResponse\022" +
+      "\205\001\n\024updateCheckpointTxid\0225.com.ybh.dfs.n" +
+      "amenode.rpc.UpdateCheckpointTxidRequest\032" +
+      "6.com.ybh.dfs.namenode.rpc.UpdateCheckpo" +
+      "intTxidResponse\022c\n\006create\022+.com.ybh.dfs." +
+      "namenode.rpc.CreateFileRequest\032,.com.ybh",
+      ".dfs.namenode.rpc.CreateFileResponse\022|\n\021" +
+      "allocateDatanodes\0222.com.ybh.dfs.namenode" +
+      ".rpc.AllocateDataNodesRequest\0323.com.ybh." +
+      "dfs.namenode.rpc.AllocateDataNodesRespon" +
+      "seB4\n com.ybh.dfs.namenode.rpc.serviceB\016" +
+      "NameNodeServerP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

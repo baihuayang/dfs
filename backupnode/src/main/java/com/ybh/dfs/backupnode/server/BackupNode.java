@@ -6,6 +6,7 @@ package com.ybh.dfs.backupnode.server;
 public class BackupNode {
     private volatile  Boolean isRunning = true;
     private FSNamesystem namesystem;
+    private NameNodeRpcClient namenode;
 
     public static void main(String[] args) throws InterruptedException {
         BackupNode backupNode = new BackupNode();
@@ -15,13 +16,14 @@ public class BackupNode {
 
     public void init(){
         this.namesystem = new FSNamesystem();
+        this.namenode = new NameNodeRpcClient();
     }
 
     private void start()  {
-        EditLogFetcher editLogFetcher = new EditLogFetcher(this, namesystem);
+        EditLogFetcher editLogFetcher = new EditLogFetcher(this, namesystem, this.namenode);
         editLogFetcher.start();
 
-        FsImageCheckpointer fsImageCheckpointer = new FsImageCheckpointer(this, namesystem);
+        FsImageCheckpointer fsImageCheckpointer = new FsImageCheckpointer(this, namesystem, namenode);
         fsImageCheckpointer.start();
 
     }
@@ -35,5 +37,6 @@ public class BackupNode {
     public Boolean isRunning(){
         return isRunning;
     }
+
 
 }

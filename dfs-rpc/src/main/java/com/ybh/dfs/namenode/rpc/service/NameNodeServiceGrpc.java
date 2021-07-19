@@ -66,6 +66,33 @@ public class NameNodeServiceGrpc {
               "com.ybh.dfs.namenode.rpc.NameNodeService", "fetchEditsLog"),
           io.grpc.protobuf.ProtoUtils.marshaller(com.ybh.dfs.namenode.rpc.model.FetchEditsLogRequest.getDefaultInstance()),
           io.grpc.protobuf.ProtoUtils.marshaller(com.ybh.dfs.namenode.rpc.model.FetchEditsLogResponse.getDefaultInstance()));
+  @io.grpc.ExperimentalApi
+  public static final io.grpc.MethodDescriptor<com.ybh.dfs.namenode.rpc.model.UpdateCheckpointTxidRequest,
+      com.ybh.dfs.namenode.rpc.model.UpdateCheckpointTxidResponse> METHOD_UPDATE_CHECKPOINT_TXID =
+      io.grpc.MethodDescriptor.create(
+          io.grpc.MethodDescriptor.MethodType.UNARY,
+          generateFullMethodName(
+              "com.ybh.dfs.namenode.rpc.NameNodeService", "updateCheckpointTxid"),
+          io.grpc.protobuf.ProtoUtils.marshaller(com.ybh.dfs.namenode.rpc.model.UpdateCheckpointTxidRequest.getDefaultInstance()),
+          io.grpc.protobuf.ProtoUtils.marshaller(com.ybh.dfs.namenode.rpc.model.UpdateCheckpointTxidResponse.getDefaultInstance()));
+  @io.grpc.ExperimentalApi
+  public static final io.grpc.MethodDescriptor<com.ybh.dfs.namenode.rpc.model.CreateFileRequest,
+      com.ybh.dfs.namenode.rpc.model.CreateFileResponse> METHOD_CREATE =
+      io.grpc.MethodDescriptor.create(
+          io.grpc.MethodDescriptor.MethodType.UNARY,
+          generateFullMethodName(
+              "com.ybh.dfs.namenode.rpc.NameNodeService", "create"),
+          io.grpc.protobuf.ProtoUtils.marshaller(com.ybh.dfs.namenode.rpc.model.CreateFileRequest.getDefaultInstance()),
+          io.grpc.protobuf.ProtoUtils.marshaller(com.ybh.dfs.namenode.rpc.model.CreateFileResponse.getDefaultInstance()));
+  @io.grpc.ExperimentalApi
+  public static final io.grpc.MethodDescriptor<com.ybh.dfs.namenode.rpc.model.AllocateDataNodesRequest,
+      com.ybh.dfs.namenode.rpc.model.AllocateDataNodesResponse> METHOD_ALLOCATE_DATANODES =
+      io.grpc.MethodDescriptor.create(
+          io.grpc.MethodDescriptor.MethodType.UNARY,
+          generateFullMethodName(
+              "com.ybh.dfs.namenode.rpc.NameNodeService", "allocateDatanodes"),
+          io.grpc.protobuf.ProtoUtils.marshaller(com.ybh.dfs.namenode.rpc.model.AllocateDataNodesRequest.getDefaultInstance()),
+          io.grpc.protobuf.ProtoUtils.marshaller(com.ybh.dfs.namenode.rpc.model.AllocateDataNodesResponse.getDefaultInstance()));
 
   public static NameNodeServiceStub newStub(io.grpc.Channel channel) {
     return new NameNodeServiceStub(channel);
@@ -97,6 +124,15 @@ public class NameNodeServiceGrpc {
 
     public void fetchEditsLog(com.ybh.dfs.namenode.rpc.model.FetchEditsLogRequest request,
         io.grpc.stub.StreamObserver<com.ybh.dfs.namenode.rpc.model.FetchEditsLogResponse> responseObserver);
+
+    public void updateCheckpointTxid(com.ybh.dfs.namenode.rpc.model.UpdateCheckpointTxidRequest request,
+        io.grpc.stub.StreamObserver<com.ybh.dfs.namenode.rpc.model.UpdateCheckpointTxidResponse> responseObserver);
+
+    public void create(com.ybh.dfs.namenode.rpc.model.CreateFileRequest request,
+        io.grpc.stub.StreamObserver<com.ybh.dfs.namenode.rpc.model.CreateFileResponse> responseObserver);
+
+    public void allocateDatanodes(com.ybh.dfs.namenode.rpc.model.AllocateDataNodesRequest request,
+        io.grpc.stub.StreamObserver<com.ybh.dfs.namenode.rpc.model.AllocateDataNodesResponse> responseObserver);
   }
 
   public static interface NameNodeServiceBlockingClient {
@@ -110,6 +146,12 @@ public class NameNodeServiceGrpc {
     public com.ybh.dfs.namenode.rpc.model.ShutdownResponse shutdown(com.ybh.dfs.namenode.rpc.model.ShutdownRequest request);
 
     public com.ybh.dfs.namenode.rpc.model.FetchEditsLogResponse fetchEditsLog(com.ybh.dfs.namenode.rpc.model.FetchEditsLogRequest request);
+
+    public com.ybh.dfs.namenode.rpc.model.UpdateCheckpointTxidResponse updateCheckpointTxid(com.ybh.dfs.namenode.rpc.model.UpdateCheckpointTxidRequest request);
+
+    public com.ybh.dfs.namenode.rpc.model.CreateFileResponse create(com.ybh.dfs.namenode.rpc.model.CreateFileRequest request);
+
+    public com.ybh.dfs.namenode.rpc.model.AllocateDataNodesResponse allocateDatanodes(com.ybh.dfs.namenode.rpc.model.AllocateDataNodesRequest request);
   }
 
   public static interface NameNodeServiceFutureClient {
@@ -128,6 +170,15 @@ public class NameNodeServiceGrpc {
 
     public com.google.common.util.concurrent.ListenableFuture<com.ybh.dfs.namenode.rpc.model.FetchEditsLogResponse> fetchEditsLog(
         com.ybh.dfs.namenode.rpc.model.FetchEditsLogRequest request);
+
+    public com.google.common.util.concurrent.ListenableFuture<com.ybh.dfs.namenode.rpc.model.UpdateCheckpointTxidResponse> updateCheckpointTxid(
+        com.ybh.dfs.namenode.rpc.model.UpdateCheckpointTxidRequest request);
+
+    public com.google.common.util.concurrent.ListenableFuture<com.ybh.dfs.namenode.rpc.model.CreateFileResponse> create(
+        com.ybh.dfs.namenode.rpc.model.CreateFileRequest request);
+
+    public com.google.common.util.concurrent.ListenableFuture<com.ybh.dfs.namenode.rpc.model.AllocateDataNodesResponse> allocateDatanodes(
+        com.ybh.dfs.namenode.rpc.model.AllocateDataNodesRequest request);
   }
 
   public static class NameNodeServiceStub extends io.grpc.stub.AbstractStub<NameNodeServiceStub>
@@ -181,6 +232,27 @@ public class NameNodeServiceGrpc {
       asyncUnaryCall(
           getChannel().newCall(METHOD_FETCH_EDITS_LOG, getCallOptions()), request, responseObserver);
     }
+
+    @Override
+    public void updateCheckpointTxid(com.ybh.dfs.namenode.rpc.model.UpdateCheckpointTxidRequest request,
+        io.grpc.stub.StreamObserver<com.ybh.dfs.namenode.rpc.model.UpdateCheckpointTxidResponse> responseObserver) {
+      asyncUnaryCall(
+          getChannel().newCall(METHOD_UPDATE_CHECKPOINT_TXID, getCallOptions()), request, responseObserver);
+    }
+
+    @Override
+    public void create(com.ybh.dfs.namenode.rpc.model.CreateFileRequest request,
+        io.grpc.stub.StreamObserver<com.ybh.dfs.namenode.rpc.model.CreateFileResponse> responseObserver) {
+      asyncUnaryCall(
+          getChannel().newCall(METHOD_CREATE, getCallOptions()), request, responseObserver);
+    }
+
+    @Override
+    public void allocateDatanodes(com.ybh.dfs.namenode.rpc.model.AllocateDataNodesRequest request,
+        io.grpc.stub.StreamObserver<com.ybh.dfs.namenode.rpc.model.AllocateDataNodesResponse> responseObserver) {
+      asyncUnaryCall(
+          getChannel().newCall(METHOD_ALLOCATE_DATANODES, getCallOptions()), request, responseObserver);
+    }
   }
 
   public static class NameNodeServiceBlockingStub extends io.grpc.stub.AbstractStub<NameNodeServiceBlockingStub>
@@ -228,6 +300,24 @@ public class NameNodeServiceGrpc {
     public com.ybh.dfs.namenode.rpc.model.FetchEditsLogResponse fetchEditsLog(com.ybh.dfs.namenode.rpc.model.FetchEditsLogRequest request) {
       return blockingUnaryCall(
           getChannel(), METHOD_FETCH_EDITS_LOG, getCallOptions(), request);
+    }
+
+    @Override
+    public com.ybh.dfs.namenode.rpc.model.UpdateCheckpointTxidResponse updateCheckpointTxid(com.ybh.dfs.namenode.rpc.model.UpdateCheckpointTxidRequest request) {
+      return blockingUnaryCall(
+          getChannel(), METHOD_UPDATE_CHECKPOINT_TXID, getCallOptions(), request);
+    }
+
+    @Override
+    public com.ybh.dfs.namenode.rpc.model.CreateFileResponse create(com.ybh.dfs.namenode.rpc.model.CreateFileRequest request) {
+      return blockingUnaryCall(
+          getChannel(), METHOD_CREATE, getCallOptions(), request);
+    }
+
+    @Override
+    public com.ybh.dfs.namenode.rpc.model.AllocateDataNodesResponse allocateDatanodes(com.ybh.dfs.namenode.rpc.model.AllocateDataNodesRequest request) {
+      return blockingUnaryCall(
+          getChannel(), METHOD_ALLOCATE_DATANODES, getCallOptions(), request);
     }
   }
 
@@ -282,6 +372,27 @@ public class NameNodeServiceGrpc {
       return futureUnaryCall(
           getChannel().newCall(METHOD_FETCH_EDITS_LOG, getCallOptions()), request);
     }
+
+    @Override
+    public com.google.common.util.concurrent.ListenableFuture<com.ybh.dfs.namenode.rpc.model.UpdateCheckpointTxidResponse> updateCheckpointTxid(
+        com.ybh.dfs.namenode.rpc.model.UpdateCheckpointTxidRequest request) {
+      return futureUnaryCall(
+          getChannel().newCall(METHOD_UPDATE_CHECKPOINT_TXID, getCallOptions()), request);
+    }
+
+    @Override
+    public com.google.common.util.concurrent.ListenableFuture<com.ybh.dfs.namenode.rpc.model.CreateFileResponse> create(
+        com.ybh.dfs.namenode.rpc.model.CreateFileRequest request) {
+      return futureUnaryCall(
+          getChannel().newCall(METHOD_CREATE, getCallOptions()), request);
+    }
+
+    @Override
+    public com.google.common.util.concurrent.ListenableFuture<com.ybh.dfs.namenode.rpc.model.AllocateDataNodesResponse> allocateDatanodes(
+        com.ybh.dfs.namenode.rpc.model.AllocateDataNodesRequest request) {
+      return futureUnaryCall(
+          getChannel().newCall(METHOD_ALLOCATE_DATANODES, getCallOptions()), request);
+    }
   }
 
   private static final int METHODID_REGISTER = 0;
@@ -289,6 +400,9 @@ public class NameNodeServiceGrpc {
   private static final int METHODID_MKDIR = 2;
   private static final int METHODID_SHUTDOWN = 3;
   private static final int METHODID_FETCH_EDITS_LOG = 4;
+  private static final int METHODID_UPDATE_CHECKPOINT_TXID = 5;
+  private static final int METHODID_CREATE = 6;
+  private static final int METHODID_ALLOCATE_DATANODES = 7;
 
   private static class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -325,6 +439,18 @@ public class NameNodeServiceGrpc {
         case METHODID_FETCH_EDITS_LOG:
           serviceImpl.fetchEditsLog((com.ybh.dfs.namenode.rpc.model.FetchEditsLogRequest) request,
               (io.grpc.stub.StreamObserver<com.ybh.dfs.namenode.rpc.model.FetchEditsLogResponse>) responseObserver);
+          break;
+        case METHODID_UPDATE_CHECKPOINT_TXID:
+          serviceImpl.updateCheckpointTxid((com.ybh.dfs.namenode.rpc.model.UpdateCheckpointTxidRequest) request,
+              (io.grpc.stub.StreamObserver<com.ybh.dfs.namenode.rpc.model.UpdateCheckpointTxidResponse>) responseObserver);
+          break;
+        case METHODID_CREATE:
+          serviceImpl.create((com.ybh.dfs.namenode.rpc.model.CreateFileRequest) request,
+              (io.grpc.stub.StreamObserver<com.ybh.dfs.namenode.rpc.model.CreateFileResponse>) responseObserver);
+          break;
+        case METHODID_ALLOCATE_DATANODES:
+          serviceImpl.allocateDatanodes((com.ybh.dfs.namenode.rpc.model.AllocateDataNodesRequest) request,
+              (io.grpc.stub.StreamObserver<com.ybh.dfs.namenode.rpc.model.AllocateDataNodesResponse>) responseObserver);
           break;
         default:
           throw new AssertionError();
@@ -379,6 +505,27 @@ public class NameNodeServiceGrpc {
               com.ybh.dfs.namenode.rpc.model.FetchEditsLogRequest,
               com.ybh.dfs.namenode.rpc.model.FetchEditsLogResponse>(
                 serviceImpl, METHODID_FETCH_EDITS_LOG)))
+        .addMethod(
+          METHOD_UPDATE_CHECKPOINT_TXID,
+          asyncUnaryCall(
+            new MethodHandlers<
+              com.ybh.dfs.namenode.rpc.model.UpdateCheckpointTxidRequest,
+              com.ybh.dfs.namenode.rpc.model.UpdateCheckpointTxidResponse>(
+                serviceImpl, METHODID_UPDATE_CHECKPOINT_TXID)))
+        .addMethod(
+          METHOD_CREATE,
+          asyncUnaryCall(
+            new MethodHandlers<
+              com.ybh.dfs.namenode.rpc.model.CreateFileRequest,
+              com.ybh.dfs.namenode.rpc.model.CreateFileResponse>(
+                serviceImpl, METHODID_CREATE)))
+        .addMethod(
+          METHOD_ALLOCATE_DATANODES,
+          asyncUnaryCall(
+            new MethodHandlers<
+              com.ybh.dfs.namenode.rpc.model.AllocateDataNodesRequest,
+              com.ybh.dfs.namenode.rpc.model.AllocateDataNodesResponse>(
+                serviceImpl, METHODID_ALLOCATE_DATANODES)))
         .build();
   }
 }

@@ -1,5 +1,7 @@
 package com.ybh.dfs.namenaode.server;
 
+import com.alibaba.fastjson.JSONObject;
+
 import java.io.IOException;
 
 /**
@@ -25,6 +27,11 @@ public class NameNode {
 	 * NameNode对外提供rpc接口的server，可以响应请求
 	 */
 	private NameNodeRpcServer rpcServer;
+
+	/**
+	 *  接收 backupnode 上传
+	 */
+	private FSImageUploadServer fsImageUploadServer;
 	
 	public NameNode() {
 		this.shouldRun = true;
@@ -34,25 +41,20 @@ public class NameNode {
 	 * 初始化NameNode
 	 */
 	private void initialize() throws IOException, InterruptedException {
-		this.namesystem = new FSNamesystem();
-		this.datanodeManager = new DataNodeManager();
-		this.rpcServer = new NameNodeRpcServer(this.namesystem, this.datanodeManager);
-
+		namesystem = new FSNamesystem();
+		datanodeManager = new DataNodeManager();
+		rpcServer = new NameNodeRpcServer(this.namesystem, this.datanodeManager);
+		fsImageUploadServer = new FSImageUploadServer();
 
 	}
 	
 	/**
 	 * 让NameNode运行起来
 	 */
-	private void start() {
-		try {
-			while(shouldRun) {
-				this.rpcServer.start();
-				this.rpcServer.blockUntilShutdown();
-			}  
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+	private void start() throws Exception{
+		this.fsImageUploadServer.start();
+		this.rpcServer.start();
+		this.rpcServer.blockUntilShutdown();
 	}
 		
 	public static void main(String[] args) throws Exception {		
@@ -60,5 +62,4 @@ public class NameNode {
 		namenode.initialize();
 		namenode.start();
 	}
-	
 }

@@ -19,5 +19,13 @@ public interface FileSystem {
 	 * @throws Exception
 	 */
 	void shutdown() throws Exception;
+
+	/**
+	 *上传文件
+	 * @param file 文件字节数组
+	 * @param filename 文件名
+	 * @throws Exception
+	 */
+	Boolean upload(byte[] file, String filename, long fileSize) throws Exception;
 	
 }

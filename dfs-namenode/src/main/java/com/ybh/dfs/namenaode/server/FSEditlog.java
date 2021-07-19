@@ -3,6 +3,7 @@ package com.ybh.dfs.namenaode.server;
 
 import com.alibaba.fastjson.JSONObject;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -12,6 +13,13 @@ import java.util.List;
  *
  */
 public class FSEditlog {
+
+	private static final Long EDIT_LOG_CLEAN_INTERVAL = 30 * 1000L;
+
+	/**
+	 * 元数据管理组件
+	 */
+	private FSNamesystem namesystem;
 
 	/**
 	 * 当前递增到的txid的序号
@@ -47,7 +55,11 @@ public class FSEditlog {
 	// 就会导致说，对一个共享的map数据结构出现多线程并发的读写的问题
 	// 此时对这个map的读写是不是就需要加锁了
 //	private Map<Thread, Long> txidMap = new HashMap<Thread, Long>();
-	
+	public FSEditlog( FSNamesystem namesystem) {
+		this.namesystem = namesystem;
+		EditLogCleaner editLogCleaner = new EditLogCleaner();
+		editLogCleaner.start();
+	}
 	/**
 	 * 记录edits log日志
 	 */
@@ -225,6 +237,42 @@ public class FSEditlog {
 			//肯定没有人当前修改内存数据了
 			//可以获取到内存缓冲的数据
 			return doubleBuffer.getBufferedEditsLog();
+		}
+	}
+
+	/**
+	 * 自动清理editlog文件
+	 */
+	class EditLogCleaner extends Thread {
+		@Override
+		public void run() {
+			System.out.println("editlog日志文件 后台清理启动......");
+			while(true) {
+				try{
+					Thread.sleep(EDIT_LOG_CLEAN_INTERVAL);
+					List<String> flushedTxids = getFlushedTxids();
+					if(flushedTxids != null && flushedTxids.size() > 0){
+						long checkpointTxid = namesystem.getCheckpointTxid();
+
+						for(String flushedTxid : flushedTxids){
+							String[] flushedTxidSplited = flushedTxid.split("_");
+							long startTxid = Long.valueOf(flushedTxidSplited[0]);
+							long endTxid = Long.valueOf(flushedTxidSplited[1]);
+							if(checkpointTxid >= endTxid){
+								// 此时删除文件
+								String deletePath = "D:\\dfs-test\\namenode\\dfs_edits-" + (startTxid) + "-" + endTxid + ".log";
+								File file = new File(deletePath);
+								if(file.exists()){
+									file.delete();
+									System.out.println("发现editlog日志文件不需要，删除:" + deletePath);
+								}
+							}
+						}
+					}
+				}catch (Exception e){
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 }

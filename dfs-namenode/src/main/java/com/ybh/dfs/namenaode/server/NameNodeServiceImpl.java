@@ -22,6 +22,7 @@ public class NameNodeServiceImpl implements NameNodeServiceGrpc.NameNodeService 
 	public static final Integer STATUS_SUCCESS = 1;
 	public static final Integer STATUS_FAILED = 2;
 	public static final Integer STATUS_SHUTDOWN = 3;
+	public static final Integer STATUS_DUPLICATE = 4;
 
 	public static final Integer BACKUP_NODE_FETCH_SIZE = 10;
 
@@ -39,10 +40,6 @@ public class NameNodeServiceImpl implements NameNodeServiceGrpc.NameNodeService 
 	 */
 	private volatile Boolean isRunning = true;
 
-	/**
-	 * 当前backupnode 同步到哪一条
-	 */
-	private long syncedTxid = 0L;
 
 	/**
 	 * 当前缓冲的一小部分editlog
@@ -166,8 +163,10 @@ public class NameNodeServiceImpl implements NameNodeServiceGrpc.NameNodeService 
 	 */
 	@Override
 	public void shutdown(ShutdownRequest request, StreamObserver<ShutdownResponse> responseObserver) {
-		this.isRunning = false;
-		this.namesystem.flush();
+		isRunning = false;
+		namesystem.flush();
+		namesystem.saveCheckpointTxid();
+		System.out.println("优雅关闭......");
 	}
 
 	/**
@@ -177,15 +176,26 @@ public class NameNodeServiceImpl implements NameNodeServiceGrpc.NameNodeService 
 	 */
 	@Override
 	public void fetchEditsLog(FetchEditsLogRequest request, StreamObserver<FetchEditsLogResponse> responseObserver) {
+		if(!isRunning){
+			FetchEditsLogResponse response = FetchEditsLogResponse.newBuilder()
+					.setEditsLog(new JSONArray().toJSONString())
+					.build();
+			responseObserver.onNext(response);
+			responseObserver.onCompleted();
+			return;
+		}
+
+		long syncedTxid = request.getSyncedTxid();
+
 		FetchEditsLogResponse response = null;
 		JSONArray fetchedEditsLog = new JSONArray();
 		//todo flushedTxids 是否只记录最大的即可？ 因为磁盘txid是顺序的？
 		List<String> flushedTxids = namesystem.getEditsLog().getFlushedTxids();
 		//如果此时还没有刷出来任何磁盘文件的话，那么此时数据仅仅存在于内存缓冲
 		if(flushedTxids.size() == 0){
-			System.out.println("从内存拉取。。。。。。。。");
+//			System.out.println("从内存拉取。。。。。。。。");
 			// 如果之前拉取过数据
-			fetchFromBufferEditLog(fetchedEditsLog);
+			fetchFromBufferEditLog(syncedTxid, fetchedEditsLog);
 		}
 		// 如果此时有落地磁盘的文件了，扫描所有磁盘文件的索引范围
 		else {
@@ -193,22 +203,22 @@ public class NameNodeServiceImpl implements NameNodeServiceGrpc.NameNodeService 
 			// 有磁盘文件，而且内存里还缓存了某个磁盘文件的数据
 			if(bufferedFlushedTxid != null){
 				// 如果拉取文件就在当前缓存数据里bufferedFlushedTxid
-				if(existInFlushedFile(bufferedFlushedTxid)){
-					System.out.println("上一次已经缓存过磁盘文件的数据，直接从磁盘文件缓存中拉取editslog。。。。。。。");
-					fetchFromCurrentBuffer(fetchedEditsLog);
+				if(existInFlushedFile(syncedTxid, bufferedFlushedTxid)){
+//					System.out.println("上一次已经缓存过磁盘文件的数据，直接从磁盘文件缓存中拉取editslog。。。。。。。");
+					fetchFromCurrentBuffer(syncedTxid, fetchedEditsLog);
 				}
 				// 如果拉取文件就不在当前缓存数据里
 				else {
-					System.out.println("上一次已经缓存过磁盘文件找不到，从下一个磁盘文件缓存中拉取editslog。。。。。。。");
+//					System.out.println("上一次已经缓存过磁盘文件找不到，从下一个磁盘文件缓存中拉取editslog。。。。。。。");
 					String nextFlushedTxid = getNextFlushedTxid(flushedTxids, bufferedFlushedTxid);
 					//如果可以找到下一个磁盘文件，那么就从下一个磁盘文件读取数据
 					if(nextFlushedTxid != null){
-						fetchFromFlushedFile(nextFlushedTxid, fetchedEditsLog);
+						fetchFromFlushedFile(syncedTxid, nextFlushedTxid, fetchedEditsLog);
 					}
 					// 没有找到下一个磁盘文件
 					else {
-						System.out.println("上一次缓存的磁盘文件找不到要拉取的数据，而且没有下一个磁盘文件");
-						fetchFromBufferEditLog(fetchedEditsLog);
+//						System.out.println("上一次缓存的磁盘文件找不到要拉取的数据，而且没有下一个磁盘文件");
+						fetchFromBufferEditLog(syncedTxid, fetchedEditsLog);
 					}
 				}
 			} else {
@@ -217,9 +227,9 @@ public class NameNodeServiceImpl implements NameNodeServiceGrpc.NameNodeService 
 				Boolean fetchedFromFlushedFile = false;
 
 				for(String flushedTxid : flushedTxids){
-					if (existInFlushedFile(flushedTxid)) {
-						System.out.println("从磁盘文件拉取editslog。。。。。。。flushedTxid=" + flushedTxid);
-						fetchFromFlushedFile(flushedTxid, fetchedEditsLog);
+					if (existInFlushedFile(syncedTxid, flushedTxid)) {
+//						System.out.println("从磁盘文件拉取editslog。。。。。。。flushedTxid=" + flushedTxid);
+						fetchFromFlushedFile(syncedTxid, flushedTxid, fetchedEditsLog);
 						fetchedFromFlushedFile = true;
 						break;
 					}
@@ -227,14 +237,26 @@ public class NameNodeServiceImpl implements NameNodeServiceGrpc.NameNodeService 
 
 				// 第二种情况，你要拉去的txid已经比磁盘文件里的全部都新
 				if(!fetchedFromFlushedFile) {
-					System.out.println("所有磁盘文件都没找到要拉取的editslog，直接从内存缓冲中拉取");
-					fetchFromBufferEditLog(fetchedEditsLog);
+//					System.out.println("所有磁盘文件都没找到要拉取的editslog，直接从内存缓冲中拉取");
+					fetchFromBufferEditLog(syncedTxid, fetchedEditsLog);
 				}
 			}
 
 		}
 		response = FetchEditsLogResponse.newBuilder()
 				.setEditsLog(fetchedEditsLog.toJSONString())
+				.build();
+
+		responseObserver.onNext(response);
+		responseObserver.onCompleted();
+	}
+
+	@Override
+	public void updateCheckpointTxid(UpdateCheckpointTxidRequest request, StreamObserver<UpdateCheckpointTxidResponse> responseObserver) {
+		long txid = request.getTxid();
+		namesystem.setCheckpointTxid(txid);
+		UpdateCheckpointTxidResponse response = UpdateCheckpointTxidResponse.newBuilder()
+				.setStatus(1)
 				.build();
 
 		responseObserver.onNext(response);
@@ -262,7 +284,7 @@ public class NameNodeServiceImpl implements NameNodeServiceGrpc.NameNodeService 
 	 * 从已经刷入磁盘的文件里读取edits.log，同时缓存这个文件数据到内存
 	 * @param flushedTxid
 	 */
-	private void fetchFromFlushedFile(String flushedTxid, JSONArray fetchedEditsLog){
+	private void fetchFromFlushedFile(long syncedtxid, String flushedTxid, JSONArray fetchedEditsLog){
 		try {
 			//此时，可以把磁盘文件里以及下一个磁盘文件数据的数据都读取出来，放入缓存
 			String[] flushedTxidSplited = flushedTxid.split("_");
@@ -270,7 +292,7 @@ public class NameNodeServiceImpl implements NameNodeServiceGrpc.NameNodeService 
 			long startTxid = Long.valueOf(flushedTxidSplited[0]);
 			long endTxid = Long.valueOf(flushedTxidSplited[1]);
 
-			String currentEditsLogFile = "D:\\dfs-test\\namenode\\dfs-edits-" + startTxid + "-" + endTxid + ".log";
+			String currentEditsLogFile = "D:\\dfs-test\\namenode\\dfs_edits-" + startTxid + "-" + endTxid + ".log";
 
 			List<String> editsLogs = Files.readAllLines(Paths.get(currentEditsLogFile),
 					StandardCharsets.UTF_8);
@@ -281,7 +303,7 @@ public class NameNodeServiceImpl implements NameNodeServiceGrpc.NameNodeService 
 			}
 			bufferedFlushedTxid = flushedTxid; //缓存了某个刷融入磁盘文件的数据
 
-			fetchFromCurrentBuffer(fetchedEditsLog);
+			fetchFromCurrentBuffer(syncedtxid, fetchedEditsLog);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -292,7 +314,7 @@ public class NameNodeServiceImpl implements NameNodeServiceGrpc.NameNodeService 
 	 * @param flushedTxid
 	 * @return
 	 */
-	private Boolean existInFlushedFile(String flushedTxid) {
+	private Boolean existInFlushedFile(long syncedTxid, String flushedTxid) {
 		String[] flushedTxidSplited = flushedTxid.split("_");
 
 		long startTxid = Long.valueOf(flushedTxidSplited[0]);
@@ -305,12 +327,12 @@ public class NameNodeServiceImpl implements NameNodeServiceGrpc.NameNodeService 
 	 * 从内存缓冲的editsLog中 拉取数据
 	 * @param fetchedEditsLog
 	 */
-	private void fetchFromBufferEditLog(JSONArray fetchedEditsLog) {
+	private void fetchFromBufferEditLog(long syncedTxid, JSONArray fetchedEditsLog) {
 		//如果要拉取的txid还在上一次内存缓存中，继续缓存中拉取
 		long fetchTxid = syncedTxid + 1;
 		if(fetchTxid <= currentBufferedMaxTxid){
-			System.out.println("尝试从内存缓冲拉取的时候，发现上一次内存缓存有数据可供拉取。。。。。。");
-			fetchFromCurrentBuffer(fetchedEditsLog);
+//			System.out.println("尝试从内存缓冲拉取的时候，发现上一次内存缓存有数据可供拉取。。。。。。");
+			fetchFromCurrentBuffer(syncedTxid, fetchedEditsLog);
 			return;
 		}
 
@@ -326,7 +348,7 @@ public class NameNodeServiceImpl implements NameNodeServiceGrpc.NameNodeService 
 			}
 			bufferedFlushedTxid = null;
 
-			fetchFromCurrentBuffer(fetchedEditsLog);
+			fetchFromCurrentBuffer(syncedTxid, fetchedEditsLog);
 		}
 	}
 
@@ -334,17 +356,61 @@ public class NameNodeServiceImpl implements NameNodeServiceGrpc.NameNodeService 
 	 * 从当前已经在内存里缓存的数据中拉取editslog
 	 * @param fetchedEditsLog
 	 */
-	private void fetchFromCurrentBuffer(JSONArray fetchedEditsLog) {
+	private void fetchFromCurrentBuffer(long syncedTxid, JSONArray fetchedEditsLog) {
 		int fetchCount = 0;
+		long fetchTxid = syncedTxid + 1;
 		for(int i=0; i<currentBufferedEditsLog.size(); i++){
-			if(currentBufferedEditsLog.getJSONObject(i).getLong("txid") == syncedTxid + 1){
+			if(currentBufferedEditsLog.getJSONObject(i).getLong("txid") == fetchTxid){
 				fetchedEditsLog.add(currentBufferedEditsLog.getJSONObject(i));
-				syncedTxid = currentBufferedEditsLog.getJSONObject(i).getLong("txid");
+				fetchTxid = currentBufferedEditsLog.getJSONObject(i).getLongValue("txid") + 1;
 				fetchCount++;
 			}
 			if(fetchCount == BACKUP_NODE_FETCH_SIZE){
 				break;
 			}
 		}
+	}
+
+	@Override
+	public void create(CreateFileRequest request, StreamObserver<CreateFileResponse> responseObserver) {
+		// 文件查重和创建文件放在一起执行
+		// 多线程并发情况下，文件名创建和查重都是正确的
+		// 同步代码块执行
+		try{
+			CreateFileResponse response = null;
+			if(!isRunning){
+				response = CreateFileResponse.newBuilder()
+						.setStatus(STATUS_SHUTDOWN)
+						.build();
+			} else{
+				String filename = request.getFilename();
+				Boolean success = namesystem.create(filename);
+				if(success) {
+					response = CreateFileResponse.newBuilder()
+							.setStatus(STATUS_SUCCESS)
+							.build();
+				} else {
+					response = CreateFileResponse.newBuilder()
+							.setStatus(STATUS_FAILED)
+							.build();
+				}
+			}
+			responseObserver.onNext(response);
+			responseObserver.onCompleted();
+		}catch (Exception e){
+			e.printStackTrace();
+		}
+
+	}
+
+	/**
+	 * 为文件上传请求分配多个数据节点来传输多个副本
+	 * @param request
+	 * @param responseObserver
+	 */
+	@Override
+	public void allocateDatanodes(AllocateDataNodesRequest request,
+								  StreamObserver<AllocateDataNodesResponse> responseObserver) {
+
 	}
 }

@@ -13,10 +13,10 @@ public class FSDirectory {
 	/**
 	 * 内存中的文件目录树
 	 */
-	private INodeDirectory dirTree;
-	
+	private INode dirTree;
+
 	public FSDirectory() {
-		this.dirTree = new INodeDirectory("/");  
+		this.dirTree = new INode("/");
 	}
 	
 	/**
@@ -32,21 +32,21 @@ public class FSDirectory {
 	
 		synchronized(dirTree) {
 			String[] pathes = path.split("/");
-			INodeDirectory parent = dirTree;
+			INode parent = dirTree;
 			
 			for(String splitedPath : pathes) {
 				if(splitedPath.trim().equals("")) {
 					continue;
 				}
 				// /usr/local
-				INodeDirectory dir = findDirectory(parent, splitedPath);
+				INode dir = findDirectory(parent, splitedPath);
 
 				if(dir != null) {
 					parent = dir;
 					continue;
 				}
 				
-				INodeDirectory child = new INodeDirectory(splitedPath); 
+				INode child = new INode(splitedPath);
 				parent.addChild(child);
 				parent = child;
 			}
@@ -56,14 +56,75 @@ public class FSDirectory {
 //		printDirTree(dirTree, "");
 	}
 
-	private void printDirTree(INodeDirectory dirTree, String space) {
+	private void printDirTree(INode dirTree, String space) {
 		if(dirTree.children.size() == 0){
 			return;
 		}
 		for(INode dir : dirTree.getChildren()){
-			System.out.println(space + ((INodeDirectory) dir).getPath());
-			printDirTree((INodeDirectory) dir, space+" ");
+			System.out.println(space + ((INode) dir).getPath());
+			printDirTree((INode) dir, space+" ");
 		}
+	}
+
+	/**
+	 * 创建文件
+	 * @param filename
+	 * @return
+	 */
+	public Boolean create(String filename) {
+		// /image/product/img001.jpg
+		// 解析前面路径
+		synchronized (dirTree){
+			String[] splitedFilename = filename.split("/");
+			String realFilename = splitedFilename[splitedFilename.length - 1];
+			INode parent = dirTree;
+
+			for(int i=0;i<splitedFilename.length-1;i++) {
+				if(i == 0) {
+					continue;
+				}
+				// /usr/local
+				INode dir = findDirectory(parent, splitedFilename[i]);
+
+				if(dir != null) {
+					parent = dir;
+					continue;
+				}
+
+				INode child = new INode(splitedFilename[i]);
+				parent.addChild(child);
+
+				parent = child;
+			}
+			//此时获取到文件的上一级目录
+			//此时可以查找当前这个目录下面是否有对应的文件
+			if(existFile(parent, realFilename)) {
+				return false;
+			}
+
+			// 真正的在目录里创建一个文件出来
+			INode file = new INode(realFilename);
+			parent.addChild(file);
+			System.out.println(dirTree);
+		}
+		return true;
+	}
+
+	/**
+	 * 目录下是否存在文件
+	 * @param dir
+	 * @param filename
+	 * @return
+	 */
+	private Boolean existFile(INode dir, String filename) {
+		if(dir.getChildren() != null && dir.getChildren().size() > 0){
+			for(INode child : dir.getChildren()) {
+				if(child.getPath().equals(filename)){
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 
@@ -73,14 +134,14 @@ public class FSDirectory {
 	 * @param path
 	 * @return
 	 */ // /usr/local/usr /local
-	private INodeDirectory findDirectory(INodeDirectory dir, String path) {
+	private INode findDirectory(INode dir, String path) {
 		if(dir.getChildren().size() == 0) {
 			return null;
 		}
 		
 		for(INode child : dir.getChildren()) {
-			if(child instanceof INodeDirectory) {
-				INodeDirectory childDir = (INodeDirectory) child;
+			if(child instanceof INode) {
+				INode childDir = (INode) child;
 				
 				if((childDir.getPath().equals(path))) {
 					return childDir;
@@ -90,28 +151,30 @@ public class FSDirectory {
 		
 		return null;
 	}
-	
-	
-	/**
-	 * 代表的是文件目录树中的一个节点
-	 * @author zhonghuashishan
-	 *
-	 */
-	private interface INode {
-		
+
+	public INode getDirTree() {
+		return dirTree;
 	}
-	
+
+	public void setDirTree(INode dirTree) {
+		this.dirTree = dirTree;
+	}
+
 	/**
 	 * 代表文件目录树中的一个目录
 	 * @author zhonghuashishan
 	 *
 	 */
-	public static class INodeDirectory implements INode {
+	public static class INode {
 		
 		private String path;
 		private List<INode> children;
+
+		public INode(){
+
+		}
 		
-		public INodeDirectory(String path) {
+		public INode(String path) {
 			this.path = path;
 			this.children = new LinkedList<INode>();
 		}
@@ -141,30 +204,7 @@ public class FSDirectory {
 					'}';
 		}
 	}
-	
-	/**
-	 * 代表文件目录树中的一个文件
-	 * @author zhonghuashishan
-	 *
-	 */
-	public static class INodeFile implements INode {
-		
-		private String name;
 
-		public String getName() {
-			return name;
-		}
-		public void setName(String name) {
-			this.name = name;
-		}
-
-		@Override
-		public String toString() {
-			return "INodeFile{" +
-					"name='" + name + '\'' +
-					'}';
-		}
-	}
 
 	@Override
 	public String toString() {

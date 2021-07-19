@@ -138,7 +138,8 @@ public class DoubleBuffer {
 			byte[] data = buffer.toByteArray();
 			ByteBuffer dataBuffer = ByteBuffer.wrap(data);
 
-			String editsLogDirPath = "D:\\dfs-test\\namenode\\dfs-edits-" + (startTxid) + "-" + endTxid + ".log";
+			String editsLogDirPath = "D:\\dfs-test\\namenode\\dfs_edits-"
+					+ startTxid + "-" + endTxid + ".log";
 			flushedTxids.add(startTxid + "_" + endTxid);
 
 			RandomAccessFile file = null;

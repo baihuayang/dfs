@@ -2,7 +2,6 @@ package com.ybh.dfs.backupnode.server;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.google.gson.JsonArray;
 
 /**
  * 从namenode同步editslog组件
@@ -14,9 +13,9 @@ public class EditLogFetcher extends Thread{
     private NameNodeRpcClient nameNode;
     private FSNamesystem namesystem;
 
-    public EditLogFetcher(BackupNode backupNode, FSNamesystem namesystem){
+    public EditLogFetcher(BackupNode backupNode, FSNamesystem namesystem, NameNodeRpcClient namenode){
         this.backupNode = backupNode;
-        this.nameNode = new NameNodeRpcClient();
+        this.nameNode = namenode;
         this.namesystem = namesystem;
     }
 
@@ -26,9 +25,16 @@ public class EditLogFetcher extends Thread{
 
         while (backupNode.isRunning()){
             try{
-                JSONArray editsLogs = nameNode.fetchEditsLog();
+                if(!namesystem.isFinishedRecover()) {
+                    System.out.println("当前还没完成元数据恢复，不进行editlog同步......");
+                    Thread.sleep(1000);
+                    continue;
+                }
+
+                long syncedTxid = namesystem.getSyncedTxid();
+                JSONArray editsLogs = nameNode.fetchEditsLog(syncedTxid);
+
                 if(editsLogs.size() == 0) {
-                    System.out.println("没有拉取到任何一条editslog, 等待1秒后继续拉取");
                     Thread.sleep(1000);
                     continue;
                 }
@@ -49,10 +55,20 @@ public class EditLogFetcher extends Thread{
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
+                    } else if(op.equals("CREATE")) {
+                        String filename = editsLog.getString("PATH");
+                        try{
+                            namesystem.create(editsLog.getLongValue("txid"), filename);
+                        }catch (Exception e){
+                            e.printStackTrace();
+                        }
                     }
                 }
+
+                nameNode.setNammenodeRunning(true);
             }catch (Exception e){
-                e.printStackTrace();
+//                e.printStackTrace();
+                nameNode.setNammenodeRunning(false);
             }
         }
     }
