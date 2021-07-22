@@ -128,6 +128,7 @@ public class FSImageUploadServer extends Thread{
                 }else{
                     channel.close();
                 }
+
                 while((count = channel.read(buffer)) > 0){
                     total += count;
                     buffer.flip();

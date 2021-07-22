@@ -9,10 +9,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.ybh.dfs.namenaode.server.FSDirectory.INode;
-
-import javax.xml.bind.annotation.adapters.CollapsedStringAdapter;
 
 /**
  * 负责管理元数据的核心组件
@@ -32,9 +31,21 @@ public class FSNamesystem {
 
 	private long checkpointTxid = 0;
 
-	public FSNamesystem() {
+	/**
+	 * 每个文件对应的副本所在的DataNode
+	 */
+	private Map<String, List<DataNodeInfo>> replicasByFilename =
+			new HashMap<>();
+
+	/**
+	 * 数据节点的管理组件
+	 */
+	private DataNodeManager dataNodeManager;
+
+	public FSNamesystem(DataNodeManager dataNodeManager) {
 		this.directory = new FSDirectory();
 		this.editlog = new FSEditlog(this);
+		this.dataNodeManager = dataNodeManager;
 		recoverNamespace();
 	}
 	
@@ -292,6 +303,24 @@ public class FSNamesystem {
 			if(channel != null){
 				channel.close();
 			}
+		}
+	}
+
+	/**
+	 * 给指定文件增加一个成功接收的副本
+	 * @param filename
+	 * @throws Exception
+	 */
+	public void addReceivedReplica(String hostname, String ip, String filename) {
+		synchronized (replicasByFilename){
+			List<DataNodeInfo> replicas = replicasByFilename.get(filename);
+			if(replicas == null) {
+				replicas = new ArrayList<>();
+				replicasByFilename.put(filename, replicas);
+			}
+			DataNodeInfo datanode = dataNodeManager.getDatanode(ip, hostname);
+			replicas.add(datanode);
+			System.out.println("收到增量上报，当前的副本信息为:" + replicasByFilename);
 		}
 	}
 }

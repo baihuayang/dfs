@@ -93,6 +93,24 @@ public class NameNodeServiceGrpc {
               "com.ybh.dfs.namenode.rpc.NameNodeService", "allocateDatanodes"),
           io.grpc.protobuf.ProtoUtils.marshaller(com.ybh.dfs.namenode.rpc.model.AllocateDataNodesRequest.getDefaultInstance()),
           io.grpc.protobuf.ProtoUtils.marshaller(com.ybh.dfs.namenode.rpc.model.AllocateDataNodesResponse.getDefaultInstance()));
+  @io.grpc.ExperimentalApi
+  public static final io.grpc.MethodDescriptor<com.ybh.dfs.namenode.rpc.model.InformReplicaReceivedRequest,
+      com.ybh.dfs.namenode.rpc.model.InformReplicaReceivedResponse> METHOD_INFORM_REPLICA_RECEIVED =
+      io.grpc.MethodDescriptor.create(
+          io.grpc.MethodDescriptor.MethodType.UNARY,
+          generateFullMethodName(
+              "com.ybh.dfs.namenode.rpc.NameNodeService", "informReplicaReceived"),
+          io.grpc.protobuf.ProtoUtils.marshaller(com.ybh.dfs.namenode.rpc.model.InformReplicaReceivedRequest.getDefaultInstance()),
+          io.grpc.protobuf.ProtoUtils.marshaller(com.ybh.dfs.namenode.rpc.model.InformReplicaReceivedResponse.getDefaultInstance()));
+  @io.grpc.ExperimentalApi
+  public static final io.grpc.MethodDescriptor<com.ybh.dfs.namenode.rpc.model.ReportCompleteStorageInfoRequest,
+      com.ybh.dfs.namenode.rpc.model.ReportCompleteStorageInfoResponse> METHOD_REPORT_COMPLETE_STORAGE_INFO =
+      io.grpc.MethodDescriptor.create(
+          io.grpc.MethodDescriptor.MethodType.UNARY,
+          generateFullMethodName(
+              "com.ybh.dfs.namenode.rpc.NameNodeService", "reportCompleteStorageInfo"),
+          io.grpc.protobuf.ProtoUtils.marshaller(com.ybh.dfs.namenode.rpc.model.ReportCompleteStorageInfoRequest.getDefaultInstance()),
+          io.grpc.protobuf.ProtoUtils.marshaller(com.ybh.dfs.namenode.rpc.model.ReportCompleteStorageInfoResponse.getDefaultInstance()));
 
   public static NameNodeServiceStub newStub(io.grpc.Channel channel) {
     return new NameNodeServiceStub(channel);
@@ -133,6 +151,12 @@ public class NameNodeServiceGrpc {
 
     public void allocateDatanodes(com.ybh.dfs.namenode.rpc.model.AllocateDataNodesRequest request,
         io.grpc.stub.StreamObserver<com.ybh.dfs.namenode.rpc.model.AllocateDataNodesResponse> responseObserver);
+
+    public void informReplicaReceived(com.ybh.dfs.namenode.rpc.model.InformReplicaReceivedRequest request,
+        io.grpc.stub.StreamObserver<com.ybh.dfs.namenode.rpc.model.InformReplicaReceivedResponse> responseObserver);
+
+    public void reportCompleteStorageInfo(com.ybh.dfs.namenode.rpc.model.ReportCompleteStorageInfoRequest request,
+        io.grpc.stub.StreamObserver<com.ybh.dfs.namenode.rpc.model.ReportCompleteStorageInfoResponse> responseObserver);
   }
 
   public static interface NameNodeServiceBlockingClient {
@@ -152,6 +176,10 @@ public class NameNodeServiceGrpc {
     public com.ybh.dfs.namenode.rpc.model.CreateFileResponse create(com.ybh.dfs.namenode.rpc.model.CreateFileRequest request);
 
     public com.ybh.dfs.namenode.rpc.model.AllocateDataNodesResponse allocateDatanodes(com.ybh.dfs.namenode.rpc.model.AllocateDataNodesRequest request);
+
+    public com.ybh.dfs.namenode.rpc.model.InformReplicaReceivedResponse informReplicaReceived(com.ybh.dfs.namenode.rpc.model.InformReplicaReceivedRequest request);
+
+    public com.ybh.dfs.namenode.rpc.model.ReportCompleteStorageInfoResponse reportCompleteStorageInfo(com.ybh.dfs.namenode.rpc.model.ReportCompleteStorageInfoRequest request);
   }
 
   public static interface NameNodeServiceFutureClient {
@@ -179,6 +207,12 @@ public class NameNodeServiceGrpc {
 
     public com.google.common.util.concurrent.ListenableFuture<com.ybh.dfs.namenode.rpc.model.AllocateDataNodesResponse> allocateDatanodes(
         com.ybh.dfs.namenode.rpc.model.AllocateDataNodesRequest request);
+
+    public com.google.common.util.concurrent.ListenableFuture<com.ybh.dfs.namenode.rpc.model.InformReplicaReceivedResponse> informReplicaReceived(
+        com.ybh.dfs.namenode.rpc.model.InformReplicaReceivedRequest request);
+
+    public com.google.common.util.concurrent.ListenableFuture<com.ybh.dfs.namenode.rpc.model.ReportCompleteStorageInfoResponse> reportCompleteStorageInfo(
+        com.ybh.dfs.namenode.rpc.model.ReportCompleteStorageInfoRequest request);
   }
 
   public static class NameNodeServiceStub extends io.grpc.stub.AbstractStub<NameNodeServiceStub>
@@ -253,6 +287,20 @@ public class NameNodeServiceGrpc {
       asyncUnaryCall(
           getChannel().newCall(METHOD_ALLOCATE_DATANODES, getCallOptions()), request, responseObserver);
     }
+
+    @Override
+    public void informReplicaReceived(com.ybh.dfs.namenode.rpc.model.InformReplicaReceivedRequest request,
+        io.grpc.stub.StreamObserver<com.ybh.dfs.namenode.rpc.model.InformReplicaReceivedResponse> responseObserver) {
+      asyncUnaryCall(
+          getChannel().newCall(METHOD_INFORM_REPLICA_RECEIVED, getCallOptions()), request, responseObserver);
+    }
+
+    @Override
+    public void reportCompleteStorageInfo(com.ybh.dfs.namenode.rpc.model.ReportCompleteStorageInfoRequest request,
+        io.grpc.stub.StreamObserver<com.ybh.dfs.namenode.rpc.model.ReportCompleteStorageInfoResponse> responseObserver) {
+      asyncUnaryCall(
+          getChannel().newCall(METHOD_REPORT_COMPLETE_STORAGE_INFO, getCallOptions()), request, responseObserver);
+    }
   }
 
   public static class NameNodeServiceBlockingStub extends io.grpc.stub.AbstractStub<NameNodeServiceBlockingStub>
@@ -318,6 +366,18 @@ public class NameNodeServiceGrpc {
     public com.ybh.dfs.namenode.rpc.model.AllocateDataNodesResponse allocateDatanodes(com.ybh.dfs.namenode.rpc.model.AllocateDataNodesRequest request) {
       return blockingUnaryCall(
           getChannel(), METHOD_ALLOCATE_DATANODES, getCallOptions(), request);
+    }
+
+    @Override
+    public com.ybh.dfs.namenode.rpc.model.InformReplicaReceivedResponse informReplicaReceived(com.ybh.dfs.namenode.rpc.model.InformReplicaReceivedRequest request) {
+      return blockingUnaryCall(
+          getChannel(), METHOD_INFORM_REPLICA_RECEIVED, getCallOptions(), request);
+    }
+
+    @Override
+    public com.ybh.dfs.namenode.rpc.model.ReportCompleteStorageInfoResponse reportCompleteStorageInfo(com.ybh.dfs.namenode.rpc.model.ReportCompleteStorageInfoRequest request) {
+      return blockingUnaryCall(
+          getChannel(), METHOD_REPORT_COMPLETE_STORAGE_INFO, getCallOptions(), request);
     }
   }
 
@@ -393,6 +453,20 @@ public class NameNodeServiceGrpc {
       return futureUnaryCall(
           getChannel().newCall(METHOD_ALLOCATE_DATANODES, getCallOptions()), request);
     }
+
+    @Override
+    public com.google.common.util.concurrent.ListenableFuture<com.ybh.dfs.namenode.rpc.model.InformReplicaReceivedResponse> informReplicaReceived(
+        com.ybh.dfs.namenode.rpc.model.InformReplicaReceivedRequest request) {
+      return futureUnaryCall(
+          getChannel().newCall(METHOD_INFORM_REPLICA_RECEIVED, getCallOptions()), request);
+    }
+
+    @Override
+    public com.google.common.util.concurrent.ListenableFuture<com.ybh.dfs.namenode.rpc.model.ReportCompleteStorageInfoResponse> reportCompleteStorageInfo(
+        com.ybh.dfs.namenode.rpc.model.ReportCompleteStorageInfoRequest request) {
+      return futureUnaryCall(
+          getChannel().newCall(METHOD_REPORT_COMPLETE_STORAGE_INFO, getCallOptions()), request);
+    }
   }
 
   private static final int METHODID_REGISTER = 0;
@@ -403,6 +477,8 @@ public class NameNodeServiceGrpc {
   private static final int METHODID_UPDATE_CHECKPOINT_TXID = 5;
   private static final int METHODID_CREATE = 6;
   private static final int METHODID_ALLOCATE_DATANODES = 7;
+  private static final int METHODID_INFORM_REPLICA_RECEIVED = 8;
+  private static final int METHODID_REPORT_COMPLETE_STORAGE_INFO = 9;
 
   private static class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -451,6 +527,14 @@ public class NameNodeServiceGrpc {
         case METHODID_ALLOCATE_DATANODES:
           serviceImpl.allocateDatanodes((com.ybh.dfs.namenode.rpc.model.AllocateDataNodesRequest) request,
               (io.grpc.stub.StreamObserver<com.ybh.dfs.namenode.rpc.model.AllocateDataNodesResponse>) responseObserver);
+          break;
+        case METHODID_INFORM_REPLICA_RECEIVED:
+          serviceImpl.informReplicaReceived((com.ybh.dfs.namenode.rpc.model.InformReplicaReceivedRequest) request,
+              (io.grpc.stub.StreamObserver<com.ybh.dfs.namenode.rpc.model.InformReplicaReceivedResponse>) responseObserver);
+          break;
+        case METHODID_REPORT_COMPLETE_STORAGE_INFO:
+          serviceImpl.reportCompleteStorageInfo((com.ybh.dfs.namenode.rpc.model.ReportCompleteStorageInfoRequest) request,
+              (io.grpc.stub.StreamObserver<com.ybh.dfs.namenode.rpc.model.ReportCompleteStorageInfoResponse>) responseObserver);
           break;
         default:
           throw new AssertionError();
@@ -526,6 +610,20 @@ public class NameNodeServiceGrpc {
               com.ybh.dfs.namenode.rpc.model.AllocateDataNodesRequest,
               com.ybh.dfs.namenode.rpc.model.AllocateDataNodesResponse>(
                 serviceImpl, METHODID_ALLOCATE_DATANODES)))
+        .addMethod(
+          METHOD_INFORM_REPLICA_RECEIVED,
+          asyncUnaryCall(
+            new MethodHandlers<
+              com.ybh.dfs.namenode.rpc.model.InformReplicaReceivedRequest,
+              com.ybh.dfs.namenode.rpc.model.InformReplicaReceivedResponse>(
+                serviceImpl, METHODID_INFORM_REPLICA_RECEIVED)))
+        .addMethod(
+          METHOD_REPORT_COMPLETE_STORAGE_INFO,
+          asyncUnaryCall(
+            new MethodHandlers<
+              com.ybh.dfs.namenode.rpc.model.ReportCompleteStorageInfoRequest,
+              com.ybh.dfs.namenode.rpc.model.ReportCompleteStorageInfoResponse>(
+                serviceImpl, METHODID_REPORT_COMPLETE_STORAGE_INFO)))
         .build();
   }
 }

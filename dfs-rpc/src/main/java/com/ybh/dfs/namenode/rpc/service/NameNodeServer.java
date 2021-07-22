@@ -24,7 +24,7 @@ public final class NameNodeServer {
   static {
     String[] descriptorData = {
       "\n\027NameNodeRpcServer.proto\022\030com.ybh.dfs.n" +
-      "amenode.rpc\032\026NameNodeRpcModel.proto2\364\006\n\017" +
+      "amenode.rpc\032\026NameNodeRpcModel.proto2\226\t\n\017" +
       "NameNodeService\022a\n\010register\022).com.ybh.df" +
       "s.namenode.rpc.RegisterRequest\032*.com.ybh" +
       ".dfs.namenode.rpc.RegisterResponse\022d\n\the" +
@@ -47,8 +47,15 @@ public final class NameNodeServer {
       "allocateDatanodes\0222.com.ybh.dfs.namenode" +
       ".rpc.AllocateDataNodesRequest\0323.com.ybh." +
       "dfs.namenode.rpc.AllocateDataNodesRespon" +
-      "seB4\n com.ybh.dfs.namenode.rpc.serviceB\016" +
-      "NameNodeServerP\001b\006proto3"
+      "se\022\210\001\n\025informReplicaReceived\0226.com.ybh.d" +
+      "fs.namenode.rpc.InformReplicaReceivedReq" +
+      "uest\0327.com.ybh.dfs.namenode.rpc.InformRe" +
+      "plicaReceivedResponse\022\224\001\n\031reportComplete" +
+      "StorageInfo\022:.com.ybh.dfs.namenode.rpc.R" +
+      "eportCompleteStorageInfoRequest\032;.com.yb",
+      "h.dfs.namenode.rpc.ReportCompleteStorage" +
+      "InfoResponseB4\n com.ybh.dfs.namenode.rpc" +
+      ".serviceB\016NameNodeServerP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

@@ -33,18 +33,15 @@ public class NameNode {
 	 */
 	private FSImageUploadServer fsImageUploadServer;
 	
-	public NameNode() {
-		this.shouldRun = true;
-	}
-	
+
 	/**
 	 * 初始化NameNode
 	 */
-	private void initialize() throws IOException, InterruptedException {
-		namesystem = new FSNamesystem();
-		datanodeManager = new DataNodeManager();
-		rpcServer = new NameNodeRpcServer(this.namesystem, this.datanodeManager);
-		fsImageUploadServer = new FSImageUploadServer();
+	public NameNode()  {
+		this.datanodeManager = new DataNodeManager();
+		this.namesystem = new FSNamesystem(datanodeManager);
+		this.rpcServer = new NameNodeRpcServer(this.namesystem, this.datanodeManager);
+		this.fsImageUploadServer = new FSImageUploadServer();
 
 	}
 	
@@ -59,7 +56,6 @@ public class NameNode {
 		
 	public static void main(String[] args) throws Exception {		
 		NameNode namenode = new NameNode();
-		namenode.initialize();
 		namenode.start();
 	}
 }

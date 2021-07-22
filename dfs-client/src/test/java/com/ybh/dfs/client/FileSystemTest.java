@@ -1,13 +1,18 @@
 package com.ybh.dfs.client;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+
 public class FileSystemTest {
 
 	private static FileSystem fileSystem = new FileSystemImpl();
 	
 	public static void main(String[] args) throws Exception {
 //		testMkdir();
-//		testShutdown();
-		testCreateFile();
+		testShutdown();
+//		testCreateFile();
 	}
 
 	private static void testMkdir() {
@@ -32,7 +37,23 @@ public class FileSystemTest {
 	}
 
 	private static void testCreateFile() throws Exception {
-		fileSystem.upload(null, "/image/product/iphone001.jpg", 0L);
+		File image = new File("D:\\dfs-test\\tmp\\huiyuan01.jpeg");
+		long imageLength = image.length();
+
+		ByteBuffer buffer = ByteBuffer.allocate((int) imageLength);
+
+		FileInputStream imageIn = new FileInputStream(image);
+		FileChannel imageChannel = imageIn.getChannel();
+		imageChannel.read(buffer);
+
+		buffer.flip();
+		byte[] imageBytes = buffer.array();
+		System.out.println(imageBytes.length);
+
+		fileSystem.upload(imageBytes, "/image/product/xiaoai.jpg", imageBytes.length);
+
+		imageIn.close();
+		imageChannel.close();
 	}
 	
 }

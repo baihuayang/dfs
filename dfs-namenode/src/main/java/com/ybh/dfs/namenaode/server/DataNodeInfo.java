@@ -5,7 +5,7 @@ package com.ybh.dfs.namenaode.server;
  * @author zhonghuashishan
  *
  */
-public class DataNodeInfo {
+public class DataNodeInfo implements Comparable<DataNodeInfo>{
 
 	/**
 	 * ip地址
@@ -15,6 +15,11 @@ public class DataNodeInfo {
 	 * 主机名
 	 */
 	private String hostname;
+
+	/**
+	 * nio端口
+	 */
+	private int nioPort;
 	/**
 	 * 最近心跳时间
 	 */
@@ -24,9 +29,10 @@ public class DataNodeInfo {
 	 */
 	private long storageDataSize = 0L;
 	
-	public DataNodeInfo(String ip, String hostname) {
+	public DataNodeInfo(String ip, String hostname, int nioPort) {
 		this.ip = ip;
 		this.hostname = hostname;
+		this.nioPort = nioPort;
 		this.latestHeartbeatTime = System.currentTimeMillis();
 	}
 	
@@ -48,5 +54,40 @@ public class DataNodeInfo {
 	public void setLatestHeartbeatTime(long latestHeartbeatTime) {
 		this.latestHeartbeatTime = latestHeartbeatTime;
 	}
-	
+
+	public long getStorageDataSize() {
+		return storageDataSize;
+	}
+
+	public void setStorageDataSize(long storageDataSize) {
+		this.storageDataSize = storageDataSize;
+	}
+
+	public void addStoredDataSize(long storedDataSize) {
+		this.storageDataSize += storedDataSize;
+	}
+
+	public int getNioPort() {
+		return nioPort;
+	}
+
+	public void setNioPort(int nioPort) {
+		this.nioPort = nioPort;
+	}
+
+	@Override
+	public int compareTo(DataNodeInfo o) {
+		return (int) (this.storageDataSize - o.storageDataSize);
+	}
+
+	@Override
+	public String toString() {
+		return "DataNodeInfo{" +
+				"ip='" + ip + '\'' +
+				", hostname='" + hostname + '\'' +
+				", nioPort=" + nioPort +
+				", latestHeartbeatTime=" + latestHeartbeatTime +
+				", storageDataSize=" + storageDataSize +
+				'}';
+	}
 }
