@@ -9,7 +9,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.ybh.dfs.namenaode.server.FSDirectory.INode;
@@ -337,8 +336,8 @@ public class FSNamesystem {
 			List<DataNodeInfo> dataNodeInfoList = replicasByFilename.get(filename);
 			int size = dataNodeInfoList.size();
 
-			Random random = new Random(size);
-			int index = random.nextInt();
+			Random random = new Random();
+			int index = random.nextInt(size);
 			return dataNodeInfoList.get(index);
 		} finally {
 			readWriteLock.readLock().unlock();

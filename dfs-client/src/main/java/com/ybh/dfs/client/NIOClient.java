@@ -191,6 +191,7 @@ public class NIOClient {
 							}
 							channel.read(fileLengthBuffer);
 							if(!fileLengthBuffer.hasRemaining()) {
+								fileLengthBuffer.rewind();
 								fileLength = fileLengthBuffer.getLong();
 								System.out.println("从服务端返回数据中解析文件大小: " + fileLength);
 							}
@@ -205,6 +206,7 @@ public class NIOClient {
 							System.out.println("从服务端读取了" + hasRead + " bytes数据到内存中");
 
 							if(!fileBuffer.hasRemaining()) {
+								fileBuffer.rewind();
 								file = fileBuffer.array();
 								System.out.println("最终获取到文件大小为 " + file.length + " bytes");
 								reading = false;

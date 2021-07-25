@@ -62,7 +62,7 @@ public class FileSystemTest {
 	private static void testReadFile() throws Exception {
 		byte[] image = fileSystem.download("/image/product/xiaoai.jpg");
 		ByteBuffer wrap = ByteBuffer.wrap(image);
-		FileOutputStream imageOut = new FileOutputStream("D:\\xiaoaicopy.jpg");
+		FileOutputStream imageOut = new FileOutputStream("D:\\dfs-test\\copy\\xiaoaicopy.jpg");
 		FileChannel channel = imageOut.getChannel();
 		channel.write(wrap);
 		channel.close();

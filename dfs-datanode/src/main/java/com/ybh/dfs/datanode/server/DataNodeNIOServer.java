@@ -255,7 +255,10 @@ public class DataNodeNIOServer extends Thread {
                 System.out.println("本次文件上传出现拆包问题，缓存起来，下次继续读取......");
                 return;
             }
-        } finally {
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        finally {
             imageChannel.close();
             imageOut.close();
         }
@@ -369,7 +372,7 @@ public class DataNodeNIOServer extends Thread {
         Integer requestType = null;
         String client = channel.getRemoteAddress().toString();
 
-        if(getCachedRequests(client) != null){
+        if(getCachedRequests(client).requestType != null){
             return getCachedRequests(client).requestType;
         }
 
@@ -398,7 +401,8 @@ public class DataNodeNIOServer extends Thread {
     private CachedRequests getCachedRequests(String client) {
         CachedRequests cachedRequests = this.cachedRequests.get(client);
         if(cachedRequests == null) {
-            this.cachedRequests.put(client, new CachedRequests());
+            cachedRequests = new CachedRequests();
+            this.cachedRequests.put(client, cachedRequests);
         }
         return cachedRequests;
     }
@@ -440,7 +444,6 @@ public class DataNodeNIOServer extends Thread {
         } else {
             filenameBuffer = ByteBuffer.allocate(filenameLength);
         }
-
         channel.read(filenameBuffer);
 
         if(!filenameBuffer.hasRemaining()){
@@ -460,11 +463,11 @@ public class DataNodeNIOServer extends Thread {
             if( i == 0){
                 continue;
             }
-            dirPath += "\\" +relativeFilenameSplited[i];
+            dirPath += "\\" + relativeFilenameSplited[i];
         }
         File dir = new File(dirPath);
         if(!dir.exists()){
-            return null;
+            dir.mkdirs();
         }
 
         return dirPath + "\\" + relativeFilenameSplited[relativeFilenameSplited.length-1];
