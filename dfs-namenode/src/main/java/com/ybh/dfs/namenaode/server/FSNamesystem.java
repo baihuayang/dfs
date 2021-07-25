@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.ybh.dfs.namenaode.server.FSDirectory.INode;
 
@@ -36,6 +37,9 @@ public class FSNamesystem {
 	 */
 	private Map<String, List<DataNodeInfo>> replicasByFilename =
 			new HashMap<>();
+
+	ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+
 
 	/**
 	 * 数据节点的管理组件
@@ -312,7 +316,8 @@ public class FSNamesystem {
 	 * @throws Exception
 	 */
 	public void addReceivedReplica(String hostname, String ip, String filename) {
-		synchronized (replicasByFilename){
+		try{
+			readWriteLock.writeLock().lock();
 			List<DataNodeInfo> replicas = replicasByFilename.get(filename);
 			if(replicas == null) {
 				replicas = new ArrayList<>();
@@ -321,6 +326,22 @@ public class FSNamesystem {
 			DataNodeInfo datanode = dataNodeManager.getDatanode(ip, hostname);
 			replicas.add(datanode);
 			System.out.println("收到增量上报，当前的副本信息为:" + replicasByFilename);
+		}finally {
+			readWriteLock.writeLock().unlock();
+		}
+	}
+
+	public DataNodeInfo getDatanodeForFile(String filename) {
+		try {
+			readWriteLock.readLock().lock();
+			List<DataNodeInfo> dataNodeInfoList = replicasByFilename.get(filename);
+			int size = dataNodeInfoList.size();
+
+			Random random = new Random(size);
+			int index = random.nextInt();
+			return dataNodeInfoList.get(index);
+		} finally {
+			readWriteLock.readLock().unlock();
 		}
 	}
 }

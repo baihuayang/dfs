@@ -27,5 +27,11 @@ public interface FileSystem {
 	 * @throws Exception
 	 */
 	Boolean upload(byte[] file, String filename, long fileSize) throws Exception;
-	
+
+	/**
+	 * 下载文件
+	 * @param filename
+	 * @return
+	 */
+	byte[] download(String filename);
 }

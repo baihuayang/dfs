@@ -69,7 +69,6 @@ public class DataNode {
 	
 	public static void main(String[] args) throws Exception{
 		DataNode datanode = new DataNode();
-//		datanode.initialize();
 		datanode.start();
 	}
 	

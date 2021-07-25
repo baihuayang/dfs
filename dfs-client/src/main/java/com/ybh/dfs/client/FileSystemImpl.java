@@ -20,6 +20,7 @@ public class FileSystemImpl implements FileSystem {
 	private static final Integer NAMENODE_PORT = 50070;
 
 	private NameNodeServiceGrpc.NameNodeServiceBlockingStub namenode;
+	private NIOClient nioClient;
 
 	public FileSystemImpl() {
 		ManagedChannel channel = NettyChannelBuilder
@@ -27,6 +28,7 @@ public class FileSystemImpl implements FileSystem {
 				.negotiationType(NegotiationType.PLAINTEXT)
 				.build();
 		this.namenode = NameNodeServiceGrpc.newBlockingStub(channel);
+		this.nioClient = new NIOClient();
 	}
 
 	/**
@@ -70,6 +72,7 @@ public class FileSystemImpl implements FileSystem {
 		if(!createFile(filename)) {
 			return false;
 		}
+		System.out.println("在文件目录树中成功创建该文件......");
 
 		// /image/product/iphone.jpg
 		// 希望的是每个数据节点在无力存储的时候，其实就是会在DATA_DIR下面去建立
@@ -81,7 +84,7 @@ public class FileSystemImpl implements FileSystem {
 		// 需要上传几个副本
 		// 保证每个数据节点放的数据量是比较均衡的
 		String datanodesJson = allocateDataNodes(filename, fileSize);
-		System.out.println(datanodesJson);
+		System.out.println("申请分配了2个数据节点：" + datanodesJson);
 		// 依次把文件副本上传到各个数据节点去
 		// 考虑上传失败
 		// 容错机制
@@ -90,7 +93,7 @@ public class FileSystemImpl implements FileSystem {
 			JSONObject datanode = datanodes.getJSONObject(i);
 			String hostname = datanode.getString("hostname");
 			int nioPort = datanode.getInteger("nioPort");
-			NIOClient.sendFile(hostname, nioPort, file, filename, fileSize);
+			nioClient.sendFile(hostname, nioPort, file, filename, fileSize);
 		}
 		return true;
 	}
@@ -100,7 +103,8 @@ public class FileSystemImpl implements FileSystem {
 				.setFilename(filename)
 				.build();
 		CreateFileResponse createFileResponse = namenode.create(request);
-		if( createFileResponse.getStatus() == 1) {
+
+		if (createFileResponse.getStatus() == 1) {
 			return true;
 		}
 		return true;
@@ -122,6 +126,28 @@ public class FileSystemImpl implements FileSystem {
 
 		AllocateDataNodesResponse response = namenode.allocateDatanodes(request);
 		return response.getDatanodes();
+	}
+
+	@Override
+	public byte[] download(String filename) {
+		//1. 调用namenode接口，获取这个文件的某个副本所在的DataNode
+		JSONObject datanode = getDataNodeForFile(filename);
+		System.out.println("master分配用来下载文件的数据节点 " + datanode.toJSONString());
+		//2. 打开一个针对哪个DataNode的网络连接，发送文件名过去
+		//3. 尝试从连接中读取对方传输过来的文件
+		//4. 读取到文件之后，不需要写入本地的磁盘中，而是转换为一个字节数组返回即可
+		String hostname = datanode.getString("hostname");
+		Integer nioPort = datanode.getInteger("nioPort");
+		return nioClient.readFile(hostname, nioPort, filename);
+	}
+
+	private JSONObject getDataNodeForFile(String filename) {
+		GetDataNodeForFileRequest request = GetDataNodeForFileRequest
+				.newBuilder()
+				.setFilename(filename)
+				.build();
+		GetDataNodeForFileResponse response = namenode.getDataNodeForFile(request);
+		return JSONObject.parseObject(response.getDatanodeInfo());
 	}
 
 }

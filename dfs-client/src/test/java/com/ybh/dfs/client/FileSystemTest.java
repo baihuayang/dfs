@@ -2,6 +2,7 @@ package com.ybh.dfs.client;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
@@ -11,8 +12,9 @@ public class FileSystemTest {
 	
 	public static void main(String[] args) throws Exception {
 //		testMkdir();
-		testShutdown();
+//		testShutdown();
 //		testCreateFile();
+		testReadFile();
 	}
 
 	private static void testMkdir() {
@@ -39,21 +41,32 @@ public class FileSystemTest {
 	private static void testCreateFile() throws Exception {
 		File image = new File("D:\\dfs-test\\tmp\\huiyuan01.jpeg");
 		long imageLength = image.length();
+		System.out.println("准备上传的文件大小为 " + imageLength);
 
 		ByteBuffer buffer = ByteBuffer.allocate((int) imageLength);
 
 		FileInputStream imageIn = new FileInputStream(image);
 		FileChannel imageChannel = imageIn.getChannel();
-		imageChannel.read(buffer);
+		int hasRead = imageChannel.read(buffer);
+		System.out.println("从磁盘文件里读取了" + hasRead + "bytes 的数据到内存中");
 
 		buffer.flip();
 		byte[] imageBytes = buffer.array();
-		System.out.println(imageBytes.length);
 
 		fileSystem.upload(imageBytes, "/image/product/xiaoai.jpg", imageBytes.length);
 
 		imageIn.close();
 		imageChannel.close();
+	}
+
+	private static void testReadFile() throws Exception {
+		byte[] image = fileSystem.download("/image/product/xiaoai.jpg");
+		ByteBuffer wrap = ByteBuffer.wrap(image);
+		FileOutputStream imageOut = new FileOutputStream("D:\\xiaoaicopy.jpg");
+		FileChannel channel = imageOut.getChannel();
+		channel.write(wrap);
+		channel.close();
+		image.clone();
 	}
 	
 }

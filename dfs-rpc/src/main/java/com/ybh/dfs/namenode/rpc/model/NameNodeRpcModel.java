@@ -114,6 +114,16 @@ public final class NameNodeRpcModel {
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_com_ybh_dfs_namenode_rpc_ReportCompleteStorageInfoResponse_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_com_ybh_dfs_namenode_rpc_GetDataNodeForFileRequest_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_com_ybh_dfs_namenode_rpc_GetDataNodeForFileRequest_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_com_ybh_dfs_namenode_rpc_GetDataNodeForFileResponse_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_com_ybh_dfs_namenode_rpc_GetDataNodeForFileResponse_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -149,9 +159,11 @@ public final class NameNodeRpcModel {
       "teStorageInfoRequest\022\n\n\002ip\030\001 \001(\t\022\020\n\010host" +
       "name\030\002 \001(\t\022\021\n\tfilenames\030\003 \001(\t\022\026\n\016storedD" +
       "ataSize\030\004 \001(\003\"3\n!ReportCompleteStorageIn" +
-      "foResponse\022\016\n\006status\030\001 \001(\005B4\n\036com.ybh.df" +
-      "s.namenode.rpc.modelB\020NameNodeRpcModelP\001" +
-      "b\006proto3"
+      "foResponse\022\016\n\006status\030\001 \001(\005\"-\n\031GetDataNod" +
+      "eForFileRequest\022\020\n\010filename\030\001 \001(\t\"2\n\032Get" +
+      "DataNodeForFileResponse\022\024\n\014datanodeInfo\030" +
+      "\001 \001(\tB4\n\036com.ybh.dfs.namenode.rpc.modelB",
+      "\020NameNodeRpcModelP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -285,6 +297,18 @@ public final class NameNodeRpcModel {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_com_ybh_dfs_namenode_rpc_ReportCompleteStorageInfoResponse_descriptor,
         new String[] { "Status", });
+    internal_static_com_ybh_dfs_namenode_rpc_GetDataNodeForFileRequest_descriptor =
+      getDescriptor().getMessageTypes().get(20);
+    internal_static_com_ybh_dfs_namenode_rpc_GetDataNodeForFileRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_com_ybh_dfs_namenode_rpc_GetDataNodeForFileRequest_descriptor,
+        new String[] { "Filename", });
+    internal_static_com_ybh_dfs_namenode_rpc_GetDataNodeForFileResponse_descriptor =
+      getDescriptor().getMessageTypes().get(21);
+    internal_static_com_ybh_dfs_namenode_rpc_GetDataNodeForFileResponse_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_com_ybh_dfs_namenode_rpc_GetDataNodeForFileResponse_descriptor,
+        new String[] { "DatanodeInfo", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

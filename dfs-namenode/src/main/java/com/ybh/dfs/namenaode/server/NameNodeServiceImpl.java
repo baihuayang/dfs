@@ -504,4 +504,20 @@ public class NameNodeServiceImpl implements NameNodeServiceGrpc.NameNodeService 
 		responseObserver.onNext(response);
 		responseObserver.onCompleted();
 	}
+
+	@Override
+	public void getDataNodeForFile(GetDataNodeForFileRequest request, StreamObserver<GetDataNodeForFileResponse> responseObserver) {
+		String filename = request.getFilename();
+		DataNodeInfo datanodeForFile = namesystem.getDatanodeForFile(filename);
+
+		GetDataNodeForFileResponse response = GetDataNodeForFileResponse
+				.newBuilder()
+				.setDatanodeInfo(JSONObject.toJSONString(datanodeForFile))
+				.build();
+
+		responseObserver.onNext(response);
+		responseObserver.onCompleted();
+	}
+
+
 }
