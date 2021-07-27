@@ -1,9 +1,5 @@
 package com.ybh.dfs.namenaode.server;
 
-import com.alibaba.fastjson.JSONObject;
-
-import java.io.IOException;
-
 /**
  * NameNode核心启动类
  * @author zhonghuashishan
@@ -40,6 +36,7 @@ public class NameNode {
 	public NameNode()  {
 		this.datanodeManager = new DataNodeManager();
 		this.namesystem = new FSNamesystem(datanodeManager);
+		datanodeManager.setFsNamesystem(namesystem);
 		this.rpcServer = new NameNodeRpcServer(this.namesystem, this.datanodeManager);
 		this.fsImageUploadServer = new FSImageUploadServer();
 

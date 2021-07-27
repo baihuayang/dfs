@@ -245,7 +245,7 @@ public class DataNodeNIOServer extends Thread {
                 System.out.println("文件读取完毕，返回响应给客户端:" + client);
                 // 增量上报Master节点，自己接收到了一个文件副本
                 // /image/product/iphone.jpg
-                nameNodeRpcClient.informReplicaReceived(filename.relativeFilename);
+                nameNodeRpcClient.informReplicaReceived(filename.relativeFilename + "_" + fileLength);
                 System.out.println("增量上报收到的文件副本给NameNode节点......");
                 // 关闭读取连接
                 key.interestOps(key.interestOps() & ~SelectionKey.OP_READ);

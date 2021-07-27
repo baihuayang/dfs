@@ -129,11 +129,30 @@ public class NameNodeServiceImpl implements NameNodeServiceGrpc.NameNodeService 
 	@Override
 	public void heartbeat(HeartbeatRequest heartbeatRequest,
 						  StreamObserver<HeartbeatResponse> streamObserver) {
+		String ip = heartbeatRequest.getIp();
+		String hostname = heartbeatRequest.getHostname();
 		Boolean heartbeatResult = datanodeManager.heartbeat(heartbeatRequest.getIp(), heartbeatRequest.getHostname());
 		HeartbeatResponse response = null;
 		List<Command> commands = new ArrayList<>();
 		if(heartbeatResult){
-			 response = HeartbeatResponse.newBuilder()
+			 // 如果有复制任务 则处理复制任务
+			DataNodeInfo datanode = datanodeManager.getDatanode(ip, hostname);
+			ReplicateTask replicateTask = null;
+			while((replicateTask = datanode.pollReplicaTask()) != null) {
+				Command replicaCommand = new Command(Command.REPLICATE);
+				replicaCommand.setContent(JSONObject.toJSONString(replicateTask));
+				commands.add(replicaCommand);
+			}
+
+			RemoveReplicaTask removeReplicaTask = null;
+			while((removeReplicaTask = datanode.pollRemoveReplicaTask()) != null) {
+				Command replicaCommand = new Command(Command.REMOVE_REPLICATE);
+				replicaCommand.setContent(JSONObject.toJSONString(removeReplicaTask));
+				commands.add(replicaCommand);
+			}
+			System.out.println("接收到数据节点【" + datanode + "】的心跳，命令列表为：" + commands);
+
+			response = HeartbeatResponse.newBuilder()
 					.setStatus(STATUS_SUCCESS)
 				    .setCommands(JSONArray.toJSONString(commands))
 				    .build();
@@ -460,7 +479,7 @@ public class NameNodeServiceImpl implements NameNodeServiceGrpc.NameNodeService 
 		InformReplicaReceivedResponse response = null;
 
 		try{
-			namesystem.addReceivedReplica(hostname, ip, filename);
+			namesystem.addReceivedReplica(hostname, ip, filename.split("_")[0], Long.valueOf(filename.split("_")[1]));
 			response = InformReplicaReceivedResponse.newBuilder()
 					.setStatus(STATUS_SUCCESS)
 					.build();
@@ -493,7 +512,7 @@ public class NameNodeServiceImpl implements NameNodeServiceGrpc.NameNodeService 
 		JSONArray filenames = JSONArray.parseArray(filenamesJson);
 		for(int i=0; i<filenames.size(); i++) {
 			String filename = filenames.getString(i);
-			namesystem.addReceivedReplica(hostname, ip, filename);
+			namesystem.addReceivedReplica(hostname, ip, filename.split("_")[0], Long.valueOf(filename.split("_")[1]));
 		}
 
 		ReportCompleteStorageInfoResponse response = ReportCompleteStorageInfoResponse

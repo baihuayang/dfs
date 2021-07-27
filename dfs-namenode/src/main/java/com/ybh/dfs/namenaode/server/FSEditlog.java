@@ -126,7 +126,7 @@ public class FSEditlog {
 				// 那么这个时候来一个线程，他对应的txid = 3，此时他是可以直接返回了
 				// 就代表说肯定是他对应的edits log已经被别的线程在刷入磁盘了
 				// 这个时候txid = 3的线程就不需要等待了
-				if(txid <= syncTxid) {
+				if(txid <= syncTxid) { // todo 感觉不需要
 					return;
 				}
 
@@ -164,7 +164,7 @@ public class FSEditlog {
 
 		synchronized(this) {
 			// 同步完了磁盘之后，就会将标志位复位，再释放锁
-			isSyncRunning = false;  //TODO fix 这里有问题 可能会有两个线程同时进入flush
+			isSyncRunning = false;
 			// 唤醒可能正在等待他同步完磁盘的线程
 			notifyAll();
 		}

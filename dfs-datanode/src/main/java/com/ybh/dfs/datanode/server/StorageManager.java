@@ -30,7 +30,7 @@ public class StorageManager {
             System.out.println("扫描到一个文件 文件名为:" + path + " 大小为:" + dir.length());
 
             path = path.replace("\\", "/");
-            storageInfo.addFilename(path);
+            storageInfo.addFilename(path + "_" + dir.length());
             storageInfo.addStoredDatasize(dir.length());
             return;
         }

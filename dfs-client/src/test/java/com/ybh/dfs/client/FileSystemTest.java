@@ -13,8 +13,8 @@ public class FileSystemTest {
 	public static void main(String[] args) throws Exception {
 //		testMkdir();
 //		testShutdown();
-//		testCreateFile();
-		testReadFile();
+		testCreateFile();
+//		testReadFile();
 	}
 
 	private static void testMkdir() {

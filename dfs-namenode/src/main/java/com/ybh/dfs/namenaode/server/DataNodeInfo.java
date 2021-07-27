@@ -1,5 +1,10 @@
 package com.ybh.dfs.namenaode.server;
 
+import com.sun.jmx.snmp.tasks.TaskServer;
+
+import java.util.Objects;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 /**
  * 用来描述datanode的信息
  * @author zhonghuashishan
@@ -28,6 +33,12 @@ public class DataNodeInfo implements Comparable<DataNodeInfo>{
 	 * 已经存储数据大小
 	 */
 	private long storageDataSize = 0L;
+
+	private ConcurrentLinkedQueue<ReplicateTask> replicaTaskQueue =
+			new ConcurrentLinkedQueue<>();
+
+	private ConcurrentLinkedQueue<RemoveReplicaTask> removeReplicaTaskQueue =
+			new ConcurrentLinkedQueue<>();
 	
 	public DataNodeInfo(String ip, String hostname, int nioPort) {
 		this.ip = ip;
@@ -75,6 +86,30 @@ public class DataNodeInfo implements Comparable<DataNodeInfo>{
 		this.nioPort = nioPort;
 	}
 
+	public void addReplicaTask(ReplicateTask replicateTask) {
+		replicaTaskQueue.add(replicateTask);
+	}
+
+	public ReplicateTask pollReplicaTask() {
+		ReplicateTask replicateTask = null;
+		if(!replicaTaskQueue.isEmpty()) {
+			replicateTask = replicaTaskQueue.poll();
+		}
+		return replicateTask;
+	}
+
+	public void addRemoveReplicaTask(RemoveReplicaTask replicateTask) {
+		removeReplicaTaskQueue.add(replicateTask);
+	}
+
+	public RemoveReplicaTask pollRemoveReplicaTask() {
+		RemoveReplicaTask removeReplicaTask = null;
+		if(!removeReplicaTaskQueue.isEmpty()) {
+			removeReplicaTask = removeReplicaTaskQueue.poll();
+		}
+		return removeReplicaTask;
+	}
+
 	@Override
 	public int compareTo(DataNodeInfo o) {
 		return (int) (this.storageDataSize - o.storageDataSize);
@@ -89,5 +124,22 @@ public class DataNodeInfo implements Comparable<DataNodeInfo>{
 				", latestHeartbeatTime=" + latestHeartbeatTime +
 				", storageDataSize=" + storageDataSize +
 				'}';
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		DataNodeInfo that = (DataNodeInfo) o;
+		return Objects.equals(ip, that.ip) && Objects.equals(hostname, that.hostname);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(ip, hostname);
+	}
+
+	public String getId() {
+		return ip + "-" + hostname;
 	}
 }

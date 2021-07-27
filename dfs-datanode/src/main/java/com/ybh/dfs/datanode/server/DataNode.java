@@ -30,6 +30,11 @@ public class DataNode {
 	private StorageManager storageManager;
 
 	/**
+	 * 任务管理器
+	 */
+	private ReplicaManager replicaManager;
+
+	/**
 	 * 初始化DataNode
 	 */
 	public DataNode() throws InterruptedException {
@@ -46,8 +51,8 @@ public class DataNode {
 		} else {
 			System.out.println("不需要全量上报存储信息......");
 		}
-
-		this.heartBeatManager = new HeartBeatManager(nameNodeRpcClient, storageManager);
+		this.replicaManager = new ReplicaManager();
+		this.heartBeatManager = new HeartBeatManager(nameNodeRpcClient, storageManager, replicaManager);
 		this.heartBeatManager.start();
 
 		DataNodeNIOServer nioServer = new DataNodeNIOServer(nameNodeRpcClient);

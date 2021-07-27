@@ -19,6 +19,7 @@ import com.ybh.dfs.namenaode.server.FSDirectory.INode;
  *
  */
 public class FSNamesystem {
+	public static final Integer REPLICATE_NUM = 2;
 
 	/**
 	 * 负责管理内存文件目录树的组件
@@ -37,7 +38,13 @@ public class FSNamesystem {
 	private Map<String, List<DataNodeInfo>> replicasByFilename =
 			new HashMap<>();
 
-	ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+	/**
+	 * 每个DataNode对应的files
+	 */
+	private Map<String, List<String>> filesByDatanode =
+			new HashMap<>();
+
+	ReentrantReadWriteLock replicasLock = new ReentrantReadWriteLock();
 
 
 	/**
@@ -314,25 +321,70 @@ public class FSNamesystem {
 	 * @param filename
 	 * @throws Exception
 	 */
-	public void addReceivedReplica(String hostname, String ip, String filename) {
+	public void addReceivedReplica(String hostname, String ip, String filename, Long fileLength) {
 		try{
-			readWriteLock.writeLock().lock();
+			replicasLock.writeLock().lock();
+			DataNodeInfo datanode = dataNodeManager.getDatanode(ip, hostname);
+			// 维护file 对应的datanodes
 			List<DataNodeInfo> replicas = replicasByFilename.get(filename);
 			if(replicas == null) {
 				replicas = new ArrayList<>();
 				replicasByFilename.put(filename, replicas);
 			}
-			DataNodeInfo datanode = dataNodeManager.getDatanode(ip, hostname);
+			if(replicas.size() == REPLICATE_NUM) {
+				//减少节点存储数据量
+				datanode.addStoredDataSize(-fileLength); // todo 这里减掉没错，但是节点恢复后并没有新增啊
+				//生成副本复制任务
+				RemoveReplicaTask removeReplicaTask = new RemoveReplicaTask(filename, datanode);
+				datanode.addRemoveReplicaTask(removeReplicaTask);
+
+				return;
+			}
 			replicas.add(datanode);
-			System.out.println("收到增量上报，当前的副本信息为:" + replicasByFilename);
+			// 维护datanode 对应files
+			List<String> files = filesByDatanode.get(ip + "-" + hostname);
+			if(files == null){
+				files = new ArrayList<>();
+				filesByDatanode.put(ip + "-" + hostname, files);
+			}
+			files.add(filename + "_" + fileLength);
+
+			System.out.println("收到增量上报，当前的副本信息为:" + replicasByFilename + " , " + filesByDatanode);
 		}finally {
-			readWriteLock.writeLock().unlock();
+			replicasLock.writeLock().unlock();
+		}
+	}
+
+	public void removeDeadDatanode(DataNodeInfo dataNodeInfo) {
+		try{
+			replicasLock.writeLock().lock();
+			List<String> files = filesByDatanode.get(dataNodeInfo.getId());
+			for(String file : files) {
+				List<DataNodeInfo> replicas = replicasByFilename.get(file.split("_")[0]);
+				replicas.remove(dataNodeInfo);
+			}
+			filesByDatanode.remove(dataNodeInfo.getId());
+
+			System.out.println("从内存数据结构中删除掉这个数据节点关联的数据," + replicasByFilename + ", " + filesByDatanode);
+		} finally {
+			replicasLock.writeLock().unlock();
+		}
+	}
+
+
+
+	public List<String> getFilesByDatanode(String ip, String hostname) {
+		try{
+			replicasLock.readLock().lock();
+			return filesByDatanode.get(ip + "-" + hostname);
+		} finally {
+			replicasLock.readLock().unlock();
 		}
 	}
 
 	public DataNodeInfo getDatanodeForFile(String filename) {
 		try {
-			readWriteLock.readLock().lock();
+			replicasLock.readLock().lock();
 			List<DataNodeInfo> dataNodeInfoList = replicasByFilename.get(filename);
 			int size = dataNodeInfoList.size();
 
@@ -340,7 +392,30 @@ public class FSNamesystem {
 			int index = random.nextInt(size);
 			return dataNodeInfoList.get(index);
 		} finally {
-			readWriteLock.readLock().unlock();
+			replicasLock.readLock().unlock();
 		}
 	}
+
+	/**
+	 * 获取复制源头节点
+	 * @param filename
+	 * @param deadDatanode
+	 * @return
+	 */
+	public DataNodeInfo getReplicateSource(String filename, DataNodeInfo deadDatanode) {
+		DataNodeInfo replicateSource = null;
+		try{
+			replicasLock.readLock().lock();
+			List<DataNodeInfo> dataNodeInfoList = replicasByFilename.get(filename);
+			for(DataNodeInfo nodeInfo : dataNodeInfoList) {
+				if(!nodeInfo.equals(deadDatanode)) {
+					replicateSource = nodeInfo;
+				}
+			}
+		}finally {
+			replicasLock.readLock().unlock();
+		}
+		return replicateSource;
+	}
+
 }
