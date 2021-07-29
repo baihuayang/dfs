@@ -22,7 +22,7 @@ public class NIOClient {
 	 * @param file
 	 * @param fileSize
 	 */
-	public void sendFile(String hostname, int nioPort,
+	public Boolean sendFile(String hostname, int nioPort,
 								byte[] file, String filename, long fileSize) {
 		// 建立一个短连接
 		Selector selector = null;
@@ -97,9 +97,10 @@ public class NIOClient {
 						}
 					}
 				} 
-			}                            
-		} catch (Exception e) {  
-			e.printStackTrace();  
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
 		} finally{  
 			if(channel != null){  
 				try {  
@@ -116,7 +117,8 @@ public class NIOClient {
 					e.printStackTrace();  
 				}  
 			}  
-		} 
+		}
+		return true;
 	}
 
 
@@ -125,7 +127,7 @@ public class NIOClient {
 	 * @param hostname
 	 * @param nioPort
 	 */
-	public byte[] readFile(String hostname, int nioPort, String filename) {
+	public byte[] readFile(String hostname, int nioPort, String filename) throws Exception {
 		ByteBuffer fileLengthBuffer = null;
 		ByteBuffer fileBuffer = null;
 		Long fileLength = null;
@@ -217,7 +219,7 @@ public class NIOClient {
 			}
 			return file;
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw e;
 		} finally{
 			if(channel != null){
 				try {
@@ -235,7 +237,6 @@ public class NIOClient {
 				}
 			}
 		}
-		return file;
 	}
 	
 }

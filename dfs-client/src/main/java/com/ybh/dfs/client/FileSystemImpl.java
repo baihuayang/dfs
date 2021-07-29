@@ -92,11 +92,22 @@ public class FileSystemImpl implements FileSystem {
 		for(int i=0; i<datanodes.size(); i++){
 			JSONObject datanode = datanodes.getJSONObject(i);
 			String hostname = datanode.getString("hostname");
+			String ip = datanode.getString("ip");
 			int nioPort = datanode.getInteger("nioPort");
-			nioClient.sendFile(hostname, nioPort, file, filename, fileSize);
+
+			if(!nioClient.sendFile(hostname, nioPort, file, filename, fileSize)) {
+				datanode = JSONObject.parseObject(reallocateDataNode(filename, fileSize, ip + "-" + hostname)); // todo 这里hostname 可以吗？ 不都是 localhost吗
+				hostname = datanode.getString("hostname");
+				nioPort = datanode.getInteger("nioPort");
+				if(!nioClient.sendFile(hostname, nioPort, file, filename, fileSize)) {
+					throw new Exception("file upload failed ......");
+				}
+			}
 		}
 		return true;
 	}
+
+
 
 	private Boolean createFile(String filename) {
 		CreateFileRequest request = CreateFileRequest.newBuilder()
@@ -128,26 +139,61 @@ public class FileSystemImpl implements FileSystem {
 		return response.getDatanodes();
 	}
 
+	/**
+	 * 再次分配双副本对应数据节点
+	 * @param fileName
+	 * @param fileSize
+	 * @param excludedDatanodeId
+	 * @return
+	 */
+	private String reallocateDataNode(String fileName, long fileSize, String excludedDatanodeId) {
+		ReallocateDataNodeRequest request = ReallocateDataNodeRequest.newBuilder()
+				.setFilesize(fileSize)
+				.setExcludeDataNodeId(excludedDatanodeId)
+				.build();
+
+		ReallocateDataNodeResponse response = namenode.reallocateDataNode(request);
+		return response.getDatanode();
+	}
+
 	@Override
-	public byte[] download(String filename) {
+	public byte[] download(String filename) throws Exception {
 		//1. 调用namenode接口，获取这个文件的某个副本所在的DataNode
-		JSONObject datanode = getDataNodeForFile(filename);
+		JSONObject datanode = chooseDataNodeFromReplicas(filename, "");
 		System.out.println("master分配用来下载文件的数据节点 " + datanode.toJSONString());
 		//2. 打开一个针对哪个DataNode的网络连接，发送文件名过去
 		//3. 尝试从连接中读取对方传输过来的文件
 		//4. 读取到文件之后，不需要写入本地的磁盘中，而是转换为一个字节数组返回即可
 		String hostname = datanode.getString("hostname");
+		String ip = datanode.getString("ip");
 		Integer nioPort = datanode.getInteger("nioPort");
-		return nioClient.readFile(hostname, nioPort, filename);
+		byte[] file = null;
+		try{
+			file = nioClient.readFile(hostname, nioPort, filename);
+		} catch (Exception e) {
+			e.printStackTrace();
+
+			JSONObject dataNodeForFile = chooseDataNodeFromReplicas(filename, ip + "-" + hostname);
+			hostname = dataNodeForFile.getString("hostname");
+			nioPort = dataNodeForFile.getInteger("nioPort");
+			try{
+				file = nioClient.readFile(hostname, nioPort, filename);
+			}catch (Exception e2){
+				throw e2;
+			}
+		}
+		return file;
 	}
 
-	private JSONObject getDataNodeForFile(String filename) {
-		GetDataNodeForFileRequest request = GetDataNodeForFileRequest
+	private JSONObject chooseDataNodeFromReplicas(String filename, String excludeDataNodeId) {
+		ChooseDataNodeFromReplicasRequest request = ChooseDataNodeFromReplicasRequest
 				.newBuilder()
 				.setFilename(filename)
+				.setExcludeDataNodeId(excludeDataNodeId)
 				.build();
-		GetDataNodeForFileResponse response = namenode.getDataNodeForFile(request);
-		return JSONObject.parseObject(response.getDatanodeInfo());
+
+		ChooseDataNodeFromReplicasResponse response = namenode.chooseDataNodeFromReplicas(request);
+		return JSONObject.parseObject(response.getDatanode());
 	}
 
 }

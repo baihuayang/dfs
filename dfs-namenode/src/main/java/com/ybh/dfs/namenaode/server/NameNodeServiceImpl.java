@@ -525,18 +525,51 @@ public class NameNodeServiceImpl implements NameNodeServiceGrpc.NameNodeService 
 	}
 
 	@Override
-	public void getDataNodeForFile(GetDataNodeForFileRequest request, StreamObserver<GetDataNodeForFileResponse> responseObserver) {
+	public void chooseDataNodeFromReplicas(ChooseDataNodeFromReplicasRequest request, StreamObserver<ChooseDataNodeFromReplicasResponse> responseObserver) {
 		String filename = request.getFilename();
-		DataNodeInfo datanodeForFile = namesystem.getDatanodeForFile(filename);
+		String excludeDataNodeId = request.getExcludeDataNodeId();
+		DataNodeInfo datanodeForFile = namesystem.chooseDataNodeFromReplicas(filename, excludeDataNodeId);
 
-		GetDataNodeForFileResponse response = GetDataNodeForFileResponse
+		ChooseDataNodeFromReplicasResponse response = ChooseDataNodeFromReplicasResponse
 				.newBuilder()
-				.setDatanodeInfo(JSONObject.toJSONString(datanodeForFile))
+				.setDatanode(JSONObject.toJSONString(datanodeForFile))
 				.build();
 
 		responseObserver.onNext(response);
 		responseObserver.onCompleted();
 	}
 
+	/**
+	 * 重新分配数据节点
+	 * @param request
+	 * @param responseObserver
+	 */
+	@Override
+	public void reallocateDataNode(ReallocateDataNodeRequest request, StreamObserver<ReallocateDataNodeResponse> responseObserver) {
+		long filesize = request.getFilesize();
+		String excludeDataNodeId = request.getExcludeDataNodeId();
+		DataNodeInfo dataNode = datanodeManager.reallocateDataNode(filesize, excludeDataNodeId);
+		ReallocateDataNodeResponse response = ReallocateDataNodeResponse.newBuilder()
+				.setDatanode(JSONObject.toJSONString(dataNode))
+				.build();
 
+		responseObserver.onNext(response);
+		responseObserver.onCompleted();
+	}
+
+	/**
+	 * 集群重平衡
+	 * @param request
+	 * @param responseObserver
+	 */
+	@Override
+	public void rebalance(RebalanceRequest request, StreamObserver<RebalanceResponse> responseObserver) {
+		datanodeManager.createRebalanceReplicateTasks();
+		RebalanceResponse response = RebalanceResponse.newBuilder()
+				.setStatus(STATUS_SUCCESS)
+				.build();
+
+		responseObserver.onNext(response);
+		responseObserver.onCompleted();
+	}
 }

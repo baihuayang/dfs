@@ -33,5 +33,5 @@ public interface FileSystem {
 	 * @param filename
 	 * @return
 	 */
-	byte[] download(String filename);
+	byte[] download(String filename) throws Exception;
 }

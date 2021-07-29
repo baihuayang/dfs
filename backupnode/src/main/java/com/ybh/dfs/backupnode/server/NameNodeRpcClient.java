@@ -1,9 +1,6 @@
 package com.ybh.dfs.backupnode.server;
 
 import com.alibaba.fastjson.JSONArray;
-import com.google.gson.JsonArray;
-import com.ybh.dfs.namenode.rpc.model.FetchEditsLogRequest;
-import com.ybh.dfs.namenode.rpc.model.FetchEditsLogResponse;
 import com.ybh.dfs.namenode.rpc.model.UpdateCheckpointTxidRequest;
 import com.ybh.dfs.namenode.rpc.service.NameNodeServiceGrpc;
 import io.grpc.ManagedChannel;

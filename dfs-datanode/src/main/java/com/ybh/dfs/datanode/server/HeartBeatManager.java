@@ -2,12 +2,8 @@ package com.ybh.dfs.datanode.server;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.ybh.dfs.namenode.rpc.model.HeartbeatRequest;
-import com.ybh.dfs.namenode.rpc.model.HeartbeatResponse;
 
 import java.io.File;
-
-import static com.ybh.dfs.datanode.server.DataNodeConfig.*;
 
 /**
  * 心跳管理器

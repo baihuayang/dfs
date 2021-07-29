@@ -24,7 +24,7 @@ public final class NameNodeServer {
   static {
     String[] descriptorData = {
       "\n\027NameNodeRpcServer.proto\022\030com.ybh.dfs.n" +
-      "amenode.rpc\032\026NameNodeRpcModel.proto2\227\n\n\017" +
+      "amenode.rpc\032\026NameNodeRpcModel.proto2\227\014\n\017" +
       "NameNodeService\022a\n\010register\022).com.ybh.df" +
       "s.namenode.rpc.RegisterRequest\032*.com.ybh" +
       ".dfs.namenode.rpc.RegisterResponse\022d\n\the" +
@@ -54,12 +54,18 @@ public final class NameNodeServer {
       "StorageInfo\022:.com.ybh.dfs.namenode.rpc.R" +
       "eportCompleteStorageInfoRequest\032;.com.yb",
       "h.dfs.namenode.rpc.ReportCompleteStorage" +
-      "InfoResponse\022\177\n\022getDataNodeForFile\0223.com" +
-      ".ybh.dfs.namenode.rpc.GetDataNodeForFile" +
-      "Request\0324.com.ybh.dfs.namenode.rpc.GetDa" +
-      "taNodeForFileResponseB4\n com.ybh.dfs.nam" +
-      "enode.rpc.serviceB\016NameNodeServerP\001b\006pro" +
-      "to3"
+      "InfoResponse\022\227\001\n\032chooseDataNodeFromRepli" +
+      "cas\022;.com.ybh.dfs.namenode.rpc.ChooseDat" +
+      "aNodeFromReplicasRequest\032<.com.ybh.dfs.n" +
+      "amenode.rpc.ChooseDataNodeFromReplicasRe" +
+      "sponse\022\177\n\022reallocateDataNode\0223.com.ybh.d" +
+      "fs.namenode.rpc.ReallocateDataNodeReques" +
+      "t\0324.com.ybh.dfs.namenode.rpc.ReallocateD" +
+      "ataNodeResponse\022d\n\trebalance\022*.com.ybh.d" +
+      "fs.namenode.rpc.RebalanceRequest\032+.com.y",
+      "bh.dfs.namenode.rpc.RebalanceResponseB4\n" +
+      " com.ybh.dfs.namenode.rpc.serviceB\016NameN" +
+      "odeServerP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

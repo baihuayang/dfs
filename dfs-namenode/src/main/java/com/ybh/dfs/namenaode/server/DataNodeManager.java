@@ -23,24 +23,99 @@ public class DataNodeManager {
 		this.namesystem = fsNamesystem;
 	}
 
-	public void createLostReplicaTask(DataNodeInfo deadDataNode) {
-		System.out.println("wocacacaca");
-		List<String> files = namesystem.getFilesByDatanode(deadDataNode.getIp(), deadDataNode.getHostname());
+	public void createReplicaTask(DataNodeInfo deadDataNode) {
+		synchronized (this) {
+			System.out.println("wocacacaca");
+			List<String> files = namesystem.getFilesByDatanode(deadDataNode.getIp(), deadDataNode.getHostname());
 
-		for(String file : files) {
-			String filename = file.split("_")[0];
-			Long fileLength = Long.valueOf(file.split("_")[1]);
-			// 源头复制数据节点
-			DataNodeInfo sourceDataNode = namesystem.getReplicateSource(filename, deadDataNode);
-			// 目标复制数据节点
-			DataNodeInfo destDataNode = allocateReplicateDataNodes(fileLength, sourceDataNode, deadDataNode); // todo 如果这个目标数据节点 有丢失的副本呢？
-			//复制任务
-			ReplicateTask replicateTask = new ReplicateTask(filename, fileLength, sourceDataNode, destDataNode);
-			destDataNode.addReplicaTask(replicateTask);
-			System.out.println("为目标数据节点生成一个副本复制任务," + replicateTask);
+			for(String file : files) {
+				String filename = file.split("_")[0];
+				Long fileLength = Long.valueOf(file.split("_")[1]);
+				// 源头复制数据节点
+				DataNodeInfo sourceDataNode = namesystem.getReplicateSource(filename, deadDataNode);
+				// 目标复制数据节点
+				DataNodeInfo destDataNode = allocateReplicateDataNodes(fileLength, sourceDataNode, deadDataNode); // todo 如果这个目标数据节点 有丢失的副本呢？
+				//复制任务
+				ReplicateTask replicateTask = new ReplicateTask(filename, fileLength, sourceDataNode, destDataNode);
+				destDataNode.addReplicaTask(replicateTask);
+				System.out.println("为目标数据节点生成一个副本复制任务," + replicateTask);
+			}
 		}
 	}
 
+	/**
+	 * 创建平衡datanode 节点复制任务
+	 */
+	public void createRebalanceReplicateTasks() {
+		synchronized (this) {
+			long total = 0L;
+			for(DataNodeInfo dataNodeInfo : datanodes.values()) {
+				total += dataNodeInfo.getStorageDataSize();
+			}
+			long average = total / datanodes.size();
+			List<DataNodeInfo> sourceDataNodeList = new ArrayList<>();
+			List<DataNodeInfo> destDataNodeList = new ArrayList<>();
+			for(DataNodeInfo dataNodeInfo : datanodes.values()) {
+				if(dataNodeInfo.getStorageDataSize() > average) {
+					sourceDataNodeList.add(dataNodeInfo);
+				}
+				if(dataNodeInfo.getStorageDataSize() < average) {
+					destDataNodeList.add(dataNodeInfo);
+				}
+			}
+			List<RemoveReplicaTask> removeReplicaTasks = new ArrayList<>();
+			for(DataNodeInfo sourceDataNode : sourceDataNodeList) {
+				long toRemoveSize = sourceDataNode.getStorageDataSize() - average;
+				for(DataNodeInfo destDataNode : destDataNodeList) {
+					// 直接一次性放到一台机器
+					if(destDataNode.getStorageDataSize() + toRemoveSize <= average) {
+						long removedDataSize = 0L;
+						createRebalanceTask(sourceDataNode, destDataNode,
+								removeReplicaTasks, removedDataSize);
+						break;
+					}
+					// 只能把部分数据放到这里
+					if(destDataNode.getStorageDataSize() + toRemoveSize > average) {
+						long maxRemoveDataSize = average - destDataNode.getStorageDataSize();
+						long removedDataSize = createRebalanceTask(sourceDataNode, destDataNode,
+								removeReplicaTasks, maxRemoveDataSize);
+						toRemoveSize -= removedDataSize;
+					}
+				}
+			}
+			new DelayRemoveReplicasTask(removeReplicaTasks).start();
+		}
+	}
+
+
+	private long createRebalanceTask(DataNodeInfo sourceDataNode, DataNodeInfo destDataNode,
+									 List<RemoveReplicaTask> removeReplicaTasks, long maxRemoveDataSize) {
+		long removedDataSize = 0L;
+		List<String> files =
+				namesystem.getFilesByDatanode(destDataNode.getIp(), destDataNode.getHostname());
+		for(String file : files) {
+			String filename = file.split("_")[0];
+			Long fileLength = Long.parseLong(file.split("_")[1]);
+
+			if(removedDataSize >= maxRemoveDataSize) {
+				break;
+			}
+			//为文件生成复制任务
+			ReplicateTask replicateTask = new ReplicateTask(filename, fileLength, sourceDataNode, destDataNode);
+			destDataNode.addReplicaTask(replicateTask);
+			destDataNode.addStoredDataSize(fileLength);
+
+			//为文件生成删除任务
+			sourceDataNode.addStoredDataSize(-fileLength);
+			namesystem.removeReplicasFromDataNode(sourceDataNode.getId(), file);
+			//生成副本复制任务
+			RemoveReplicaTask removeReplicaTask = new RemoveReplicaTask(filename, sourceDataNode);
+			removeReplicaTasks.add(removeReplicaTask);
+
+			removedDataSize += fileLength;
+		}
+		return removedDataSize;
+	}
 
 
 	/**
@@ -105,6 +180,37 @@ public class DataNodeManager {
 		}
 	}
 
+    /**
+     * 分配双副本数据节点
+     * @param fileSize
+     * @return
+     */
+    public DataNodeInfo reallocateDataNode (long fileSize, String excludeDataNodeId) {
+        synchronized (this) {
+            // 取出来所有的datanode，并且按照存储数据大小进行排序
+            DataNodeInfo excludeDataNode = datanodes.get(excludeDataNodeId);
+            excludeDataNode.addStoredDataSize(-fileSize);
+
+            List<DataNodeInfo> dataNodeList = new ArrayList<>();
+            for(DataNodeInfo datanode : datanodes.values()){
+                if(!excludeDataNode.equals(datanode)){
+                    dataNodeList.add(datanode);
+                }
+            }
+            Collections.sort(dataNodeList);
+            // 选择存储数据最少的头两个 datanode 出来
+            DataNodeInfo selectDatanode = null;
+            if(dataNodeList.size() >= 1){
+                // 默认认为：要上传的文件会被放到那两个datanode上去
+                // 更新那两个 datanode 存储数据的大小，加上上传文件的大小
+                selectDatanode = dataNodeList.get(0);
+                dataNodeList.get(0).addStoredDataSize(fileSize);
+            }
+
+            return selectDatanode;
+        }
+    }
+
 	/**
 	 * 分配双副本数据节点
 	 * @param fileSize
@@ -152,6 +258,10 @@ public class DataNodeManager {
 		return datanodes.get(ip + "-" + hostname);
 	}
 
+	public DataNodeInfo getDatanode(String id) {
+		return datanodes.get(id);
+	}
+
 	/**
 	 * 是否存活监控线程
 	 */
@@ -172,7 +282,7 @@ public class DataNodeManager {
 					if(!toRemoveDatanodes.isEmpty()){
 						for(DataNodeInfo toRemoveDatanode : toRemoveDatanodes){
 							System.out.println("数据节点【" + toRemoveDatanode + "】宕机，需要进行副本复制......");
-							createLostReplicaTask(toRemoveDatanode);
+							createReplicaTask(toRemoveDatanode);
 							datanodes.remove(toRemoveDatanode.getId());
 							System.out.println("从内存数据结构中删除掉这个数据节点," + datanodes);
 							namesystem.removeDeadDatanode(toRemoveDatanode);
@@ -185,6 +295,26 @@ public class DataNodeManager {
 			}catch (Exception e){
 				e.printStackTrace();
 			}
+		}
+	}
+}
+
+class DelayRemoveReplicasTask  extends Thread{
+	List<RemoveReplicaTask> removeReplicaTasks;
+
+	public DelayRemoveReplicasTask(List<RemoveReplicaTask> removeReplicaTasks) {
+		this.removeReplicaTasks = removeReplicaTasks;
+	}
+
+	@Override
+	public void run() {
+		try{
+			Thread.sleep(24 * 60 * 60 * 1000);
+			for(RemoveReplicaTask removeReplicaTask : removeReplicaTasks) {
+				removeReplicaTask.getDataNode().addRemoveReplicaTask(removeReplicaTask);
+			}
+		}catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 }
