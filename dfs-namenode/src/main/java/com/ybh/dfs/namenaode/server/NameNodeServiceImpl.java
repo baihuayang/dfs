@@ -524,6 +524,11 @@ public class NameNodeServiceImpl implements NameNodeServiceGrpc.NameNodeService 
 		responseObserver.onCompleted();
 	}
 
+	/**
+	 * 获取文件的某个副本所在的DataNode
+	 * @param request
+	 * @param responseObserver
+	 */
 	@Override
 	public void chooseDataNodeFromReplicas(ChooseDataNodeFromReplicasRequest request, StreamObserver<ChooseDataNodeFromReplicasResponse> responseObserver) {
 		String filename = request.getFilename();

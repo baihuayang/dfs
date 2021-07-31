@@ -1,9 +1,5 @@
 package com.ybh.dfs.datanode.server;
 
-import java.io.File;
-
-import static com.ybh.dfs.datanode.server.DataNodeConfig.DATA_DIR;
-
 /**
  * DataNode启动类
  * @author zhonghuashishan
@@ -55,7 +51,8 @@ public class DataNode {
 		this.heartBeatManager = new HeartBeatManager(nameNodeRpcClient, storageManager, replicaManager);
 		this.heartBeatManager.start();
 
-		DataNodeNIOServer nioServer = new DataNodeNIOServer(nameNodeRpcClient);
+		NIOServer nioServer = new NIOServer(nameNodeRpcClient);
+		nioServer.init();
 		nioServer.start();
 	}
 
