@@ -23,6 +23,7 @@ public class IOThread extends Thread {
                 NetworkRequest request = requestQueue.poll();
                 if(request == null) {
                     Thread.sleep(100);
+                    continue;
                 }
                 Integer requestType = request.getRequestType();
                 if(requestType.equals(REQUEST_SEND_FILE)) {

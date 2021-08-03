@@ -68,6 +68,7 @@ public class NIOServer extends Thread {
                 while(keysIterator.hasNext()){
                     SelectionKey key = (SelectionKey) keysIterator.next();
                     keysIterator.remove();
+
                     if(key.isAcceptable()){
                         ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
                         // 跟每个客户端建立连接

@@ -27,7 +27,7 @@ public class NetworkResponseQueues {
     }
 
     private Map<Integer, ConcurrentLinkedQueue<NetworkResponse>> responseQueues
-            = new HashMap<>(); //todo concurrentHashMap ???
+            = new HashMap<>(); //todo concurrentHashMap ??? NioServer初始化   IOThread 调用   hashmap 存在多线程 可见性问题吗？
 
     public void initResponseQueue(Integer processorId) {
         ConcurrentLinkedQueue<NetworkResponse> responseQueue = new ConcurrentLinkedQueue<>();

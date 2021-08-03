@@ -34,7 +34,7 @@ public class DataNodeManager {
 				// 源头复制数据节点
 				DataNodeInfo sourceDataNode = namesystem.getReplicateSource(filename, deadDataNode);
 				// 目标复制数据节点
-				DataNodeInfo destDataNode = allocateReplicateDataNodes(fileLength, sourceDataNode, deadDataNode); // todo 如果这个目标数据节点 有丢失的副本呢？
+				DataNodeInfo destDataNode = allocateReplicateDataNodes(fileLength, sourceDataNode, deadDataNode);
 				//复制任务
 				ReplicateTask replicateTask = new ReplicateTask(filename, fileLength, sourceDataNode, destDataNode);
 				destDataNode.addReplicaTask(replicateTask);

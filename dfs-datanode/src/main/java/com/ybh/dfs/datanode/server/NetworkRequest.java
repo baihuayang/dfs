@@ -90,7 +90,6 @@ public class NetworkRequest {
         if (!requestTypeBuffer.hasRemaining()){
             requestTypeBuffer.rewind();
             requestType = requestTypeBuffer.getInt();
-            System.out.println("从请求中解析出请求的类型：" + requestType);
             cachedRequest.requestType = requestType;
         } else {
             cachedrequestTypeBuffer = requestTypeBuffer;

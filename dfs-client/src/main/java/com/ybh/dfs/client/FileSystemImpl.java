@@ -60,19 +60,16 @@ public class FileSystemImpl implements FileSystem {
 
 	/**
 	 * 上传文件
-	 * @param file 文件字节数组
-	 * @param filename 文件名
 	 * @throws Exception
 	 */
 	@Override
-	public Boolean upload(byte[] file, String filename, long fileSize) throws Exception {
+	public Boolean upload(FileInfo fileInfo, ResponseCallback responseCallback) throws Exception {
 		// 必须先用filename 发送一个RPC到 namenode
 		// 文件目录树创建一个文件
 		// 查重，存在就不上传了
-		if(!createFile(filename)) {
+		if(!createFile(fileInfo.getFilename())) {
 			return false;
 		}
-		System.out.println("在文件目录树中成功创建该文件......");
 
 		// /image/product/iphone.jpg
 		// 希望的是每个数据节点在无力存储的时候，其实就是会在DATA_DIR下面去建立
@@ -83,28 +80,53 @@ public class FileSystemImpl implements FileSystem {
 		// 找mster节点去要多个数据节点的地址
 		// 需要上传几个副本
 		// 保证每个数据节点放的数据量是比较均衡的
-		String datanodesJson = allocateDataNodes(filename, fileSize);
-		System.out.println("申请分配了2个数据节点：" + datanodesJson);
+		JSONArray datanodes = allocateDataNodes(fileInfo.getFilename(), fileInfo.getFileLength());
 		// 依次把文件副本上传到各个数据节点去
 		// 考虑上传失败
 		// 容错机制
-		JSONArray datanodes = JSONArray.parseArray(datanodesJson);
 		for(int i=0; i<datanodes.size(); i++){
-			JSONObject datanode = datanodes.getJSONObject(i);
-			String hostname = datanode.getString("hostname");
-			String ip = datanode.getString("ip");
-			int nioPort = datanode.getInteger("nioPort");
-
-			if(!nioClient.sendFile(hostname, nioPort, file, filename, fileSize)) {
-				datanode = JSONObject.parseObject(reallocateDataNode(filename, fileSize, ip + "-" + hostname)); // todo 这里hostname 可以吗？ 不都是 localhost吗
-				hostname = datanode.getString("hostname");
-				nioPort = datanode.getInteger("nioPort");
-				if(!nioClient.sendFile(hostname, nioPort, file, filename, fileSize)) {
-					throw new Exception("file upload failed ......");
-				}
+			Host host = getHost(datanodes.getJSONObject(i));
+			if(!nioClient.sendFile(fileInfo, host, responseCallback)){
+				host = reallocateDataNode(fileInfo, host.getId());
+				nioClient.sendFile(fileInfo, host, null);
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * 重试上传文件
+	 * @param fileInfo
+	 * @param excludeHost
+	 * @return
+	 * @throws Exception
+	 */
+	@Override
+	public Boolean retryUpload(FileInfo fileInfo, Host excludeHost) throws Exception {
+		Host host = reallocateDataNode(fileInfo, excludeHost.getId());
+		nioClient.sendFile(fileInfo, host, null);
+		return true;
+	}
+
+//	/**
+//	 * 将文件上传到指定的数据节点
+//	 * @return
+//	 */
+//	private Boolean uploadToDataNode(FileInfo fileInfo, Host host, ResponseCallback callback) {
+//		return nioClient.sendFile(fileInfo, host, callback);
+//	}
+
+	/**
+	 * 获取数据节点对应的机器
+	 * @param datanode
+	 * @return
+	 */
+	private Host getHost(JSONObject datanode) {
+		Host host = new Host();
+		host.setHostname(datanode.getString("hostname"));
+		host.setNioPort(datanode.getInteger("nioPort"));
+		host.setIp(datanode.getString("ip"));
+		return host;
 	}
 
 
@@ -128,7 +150,7 @@ public class FileSystemImpl implements FileSystem {
 	 * @param fileSize
 	 * @return
 	 */
-	private String allocateDataNodes(String fileName, long fileSize) {
+	private JSONArray allocateDataNodes(String fileName, long fileSize) {
 		AllocateDataNodesRequest request = AllocateDataNodesRequest
 				.newBuilder()
 				.setFilename(fileName)
@@ -136,48 +158,40 @@ public class FileSystemImpl implements FileSystem {
 				.build();
 
 		AllocateDataNodesResponse response = namenode.allocateDatanodes(request);
-		return response.getDatanodes();
+		return JSONArray.parseArray(response.getDatanodes());
 	}
 
 	/**
 	 * 再次分配双副本对应数据节点
-	 * @param fileName
-	 * @param fileSize
-	 * @param excludedDatanodeId
+	 * @param excludedHostId
 	 * @return
 	 */
-	private String reallocateDataNode(String fileName, long fileSize, String excludedDatanodeId) {
+	private Host reallocateDataNode(FileInfo fileInfo, String excludedHostId) {
 		ReallocateDataNodeRequest request = ReallocateDataNodeRequest.newBuilder()
-				.setFilesize(fileSize)
-				.setExcludeDataNodeId(excludedDatanodeId)
+				.setFilesize(fileInfo.getFileLength())
+				.setExcludeDataNodeId(excludedHostId)
 				.build();
 
 		ReallocateDataNodeResponse response = namenode.reallocateDataNode(request);
-		return response.getDatanode();
+		return getHost(JSONObject.parseObject(response.getDatanode()));
 	}
 
 	@Override
 	public byte[] download(String filename) throws Exception {
 		//1. 调用namenode接口，获取这个文件的某个副本所在的DataNode
-		JSONObject datanode = chooseDataNodeFromReplicas(filename, "");
-		System.out.println("master分配用来下载文件的数据节点 " + datanode.toJSONString());
+		Host datanode = chooseDataNodeFromReplicas(filename, "");
 		//2. 打开一个针对哪个DataNode的网络连接，发送文件名过去
 		//3. 尝试从连接中读取对方传输过来的文件
 		//4. 读取到文件之后，不需要写入本地的磁盘中，而是转换为一个字节数组返回即可
-		String hostname = datanode.getString("hostname");
-		String ip = datanode.getString("ip");
-		Integer nioPort = datanode.getInteger("nioPort");
 		byte[] file = null;
 		try{
-			file = nioClient.readFile(hostname, nioPort, filename);
+			file = nioClient.readFile(datanode, filename, true);
 		} catch (Exception e) {
 			e.printStackTrace();
 
-			JSONObject dataNodeForFile = chooseDataNodeFromReplicas(filename, ip + "-" + hostname);
-			hostname = dataNodeForFile.getString("hostname");
-			nioPort = dataNodeForFile.getInteger("nioPort");
+			datanode = chooseDataNodeFromReplicas(filename, datanode.getId());
 			try{
-				file = nioClient.readFile(hostname, nioPort, filename);
+				file = nioClient.readFile(datanode, filename, false);
 			}catch (Exception e2){
 				throw e2;
 			}
@@ -185,7 +199,7 @@ public class FileSystemImpl implements FileSystem {
 		return file;
 	}
 
-	private JSONObject chooseDataNodeFromReplicas(String filename, String excludeDataNodeId) {
+	private Host chooseDataNodeFromReplicas(String filename, String excludeDataNodeId) {
 		ChooseDataNodeFromReplicasRequest request = ChooseDataNodeFromReplicasRequest
 				.newBuilder()
 				.setFilename(filename)
@@ -193,7 +207,7 @@ public class FileSystemImpl implements FileSystem {
 				.build();
 
 		ChooseDataNodeFromReplicasResponse response = namenode.chooseDataNodeFromReplicas(request);
-		return JSONObject.parseObject(response.getDatanode());
+		return getHost(JSONObject.parseObject(response.getDatanode()));
 	}
 
 }

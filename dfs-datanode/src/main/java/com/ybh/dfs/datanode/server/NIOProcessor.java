@@ -9,9 +9,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class NIOProcessor extends Thread {
     private static final long MAX_SELECT_TIME = 1000;
-    private ConcurrentLinkedQueue<SocketChannel> channelQueue = new ConcurrentLinkedQueue<>();
+    private ConcurrentLinkedQueue<SocketChannel> channelQueue = new ConcurrentLinkedQueue<>();  // todo 需要线程安全队列吗，或者使用阻塞队列呢？
     private Map<String, NetworkRequest> cachedRequest = new HashMap<>();
-    private Map<String, NetworkResponse> cachedResponse = new HashMap<>();
+    private Map<String, NetworkResponse> cachedResponses = new HashMap<>();
     private Map<String, SelectionKey> cachedKeys = new HashMap<>();
     private Selector selector;
     private Integer processorId;
@@ -44,7 +44,7 @@ public class NIOProcessor extends Thread {
             try{
                 registerQueueRegister();
                 //处理队列中的响应
-                cacheResponse();
+                cacheQueuedResponse();
                 //限时阻塞方式
                 poll();
             }catch (Exception e) {
@@ -53,13 +53,13 @@ public class NIOProcessor extends Thread {
         }
     }
 
-    private void cacheResponse() {
+    private void cacheQueuedResponse() {
         NetworkResponseQueues networkResponseQueues = NetworkResponseQueues.get();
         NetworkResponse response = null;
 
         while((response = networkResponseQueues.poll(processorId)) != null) {
             String client = response.getClient();
-            cachedResponse.put(client, response);
+            cachedResponses.put(client, response);
             SelectionKey selectionKey = cachedKeys.get(client);
             selectionKey.interestOps(SelectionKey.OP_WRITE);
         }
@@ -93,31 +93,35 @@ public class NIOProcessor extends Thread {
                             request = cachedRequest.get(client);
                         } else {
                             request = new NetworkRequest();
+                            request.setChannel(channel);
+                            request.setKey(key);
                         }
-                        request.setChannel(channel);
-                        request.setKey(key);
+
                         request.read();
+
                         if (request.hasCompletedRead()) {
                             // 此时就可以将一个请求分发到请求队列里去了
                             request.setProcessorId(processorId);
                             request.setClient(client);
+
                             NetworkRequestQueue networkRequestQueue = NetworkRequestQueue.get();
-                            networkRequestQueue.addNetworkRequest(request);
+                            networkRequestQueue.offer(request);
 
                             cachedKeys.put(client, key);
                             cachedRequest.remove(client);
 
                             key.interestOps(key.interestOps() & ~SelectionKey.OP_READ);
+                            //必须得等到一个客户端的一个请求处理完毕之后，才会允许读取下一个请求
                         } else {
                             cachedRequest.put(client, request);
                         }
                     } else if(key.isWritable()) {
-                        NetworkResponse response = cachedResponse.get(client);
+                        NetworkResponse response = cachedResponses.get(client);
                         channel.write(response.getByteBuffer());
 
-                        cachedResponse.remove(client);
+                        cachedResponses.remove(client);
                         cachedKeys.remove(client);
-                        key.interestOps(key.interestOps() & ~SelectionKey.OP_WRITE);
+                        key.interestOps(SelectionKey.OP_READ);
                     }
                 }
             }

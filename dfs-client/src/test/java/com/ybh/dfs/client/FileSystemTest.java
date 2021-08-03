@@ -40,10 +40,10 @@ public class FileSystemTest {
 
 	private static void testCreateFile() throws Exception {
 		File image = new File("D:\\dfs-test\\tmp\\huiyuan01.jpeg");
-		long imageLength = image.length();
-		System.out.println("准备上传的文件大小为 " + imageLength);
+		long fileLength = image.length();
+		System.out.println("准备上传的文件大小为 " + fileLength);
 
-		ByteBuffer buffer = ByteBuffer.allocate((int) imageLength);
+		final ByteBuffer buffer = ByteBuffer.allocate((int) fileLength);
 
 		FileInputStream imageIn = new FileInputStream(image);
 		FileChannel imageChannel = imageIn.getChannel();
@@ -51,9 +51,33 @@ public class FileSystemTest {
 		System.out.println("从磁盘文件里读取了" + hasRead + "bytes 的数据到内存中");
 
 		buffer.flip();
-		byte[] imageBytes = buffer.array();
+		String filename = "/image/product/xiaoai.jpg";
+		final byte[] file = buffer.array();
 
-		fileSystem.upload(imageBytes, "/image/product/xiaoai.jpg", imageBytes.length);
+		final FileInfo fileInfo = new FileInfo();
+		fileInfo.setFilename(filename);
+		fileInfo.setFileLength(fileLength);
+		fileInfo.setFile(file);
+
+		fileSystem.upload(fileInfo, new ResponseCallback() {
+			@Override
+			public void process(NetworkResponse response) {
+				if(response.getError()){
+					Host excludedHost = new Host();
+					excludedHost.setHostname(response.getHostname());
+					excludedHost.setIp(response.getIp());
+					try {
+						fileSystem.retryUpload(fileInfo, excludedHost);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				} else {
+					ByteBuffer byteBuffer = response.getBuffer();
+					String responseStatus = new String(byteBuffer.array(), 0, buffer.remaining());
+					System.out.println("文件上传完毕，响应结果为: " + responseStatus);
+				}
+			}
+		});
 
 		imageIn.close();
 		imageChannel.close();

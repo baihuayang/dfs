@@ -28,7 +28,7 @@ public class NetworkRequestQueue {   //todo 可以使用 阻塞队列吗
 
     private ConcurrentLinkedQueue<NetworkRequest> requestQueue = new ConcurrentLinkedQueue<>();
 
-    public void addNetworkRequest(NetworkRequest request) {
+    public void offer(NetworkRequest request) {
         requestQueue.offer(request);
     }
 

@@ -21,12 +21,18 @@ public interface FileSystem {
 	void shutdown() throws Exception;
 
 	/**
-	 *上传文件
-	 * @param file 文件字节数组
-	 * @param filename 文件名
 	 * @throws Exception
 	 */
-	Boolean upload(byte[] file, String filename, long fileSize) throws Exception;
+	Boolean upload(FileInfo file, ResponseCallback responseCallback) throws Exception;
+
+	/**
+	 * 重试上传文件
+	 * @param fileInfo
+	 * @param excludeHost
+	 * @return
+	 * @throws Exception
+	 */
+	Boolean retryUpload(FileInfo fileInfo, Host excludeHost) throws Exception;
 
 	/**
 	 * 下载文件
