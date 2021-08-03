@@ -5,8 +5,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
-import static com.ybh.dfs.datanode.server.DataNodeConfig.DATA_DIR;
-
 public class NetworkRequest {
     public static final Integer REQUEST_SEND_FILE = 1;
     public static final Integer REQUEST_READ_FILE = 2;
@@ -194,6 +192,7 @@ public class NetworkRequest {
                 return null;
             }
             String absoluteFilename = getAbsoluteFilename(relativeFilename);
+
             // /image/product/iphne.jpg
             filename.relativeFilename = relativeFilename;
             filename.absoluteFilename = absoluteFilename;
@@ -284,7 +283,7 @@ public class NetworkRequest {
 
     private String getAbsoluteFilename(String relativeFilename) {
         String[] relativeFilenameSplited = relativeFilename.split("/");
-        String dirPath = DATA_DIR;
+        String dirPath = DataNodeConfig.DATA_DIR;
         for(int i=0; i<relativeFilenameSplited.length-1; i++){
             if( i == 0){
                 continue;

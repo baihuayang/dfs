@@ -2,6 +2,7 @@ package com.ybh.dfs.datanode.server;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.ybh.dfs.namenode.rpc.model.HeartbeatResponse;
 
 import java.io.File;
 
@@ -53,6 +54,7 @@ public class HeartBeatManager {
                 System.out.println("定时心跳线程启动......");
                 while(true) {
                     try {
+                        System.out.println("俺心跳啦，DATA_DIR=" + DataNodeConfig.DATA_DIR);
                         HeartbeatResponse response = nameNodeRpcClient.heartbeat();
                         if(response.getStatus() == SUCCESS) {
                             JSONArray commands = JSONArray.parseArray(response.getCommands());

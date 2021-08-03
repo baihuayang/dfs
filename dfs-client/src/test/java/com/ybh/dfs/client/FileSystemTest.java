@@ -13,8 +13,8 @@ public class FileSystemTest {
 	public static void main(String[] args) throws Exception {
 //		testMkdir();
 //		testShutdown();
-		testCreateFile();
-//		testReadFile();
+//		testCreateFile();
+		testReadFile();
 	}
 
 	private static void testMkdir() {
@@ -73,7 +73,7 @@ public class FileSystemTest {
 					}
 				} else {
 					ByteBuffer byteBuffer = response.getBuffer();
-					String responseStatus = new String(byteBuffer.array(), 0, buffer.remaining());
+					String responseStatus = new String(byteBuffer.array(), 0, byteBuffer.remaining());
 					System.out.println("文件上传完毕，响应结果为: " + responseStatus);
 				}
 			}

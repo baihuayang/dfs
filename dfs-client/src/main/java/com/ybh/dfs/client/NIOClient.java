@@ -47,6 +47,7 @@ public class NIOClient {
 		request.setNioPort(host.getNioPort());
 		request.setBuffer(buffer);
 		request.setNeedResponse(false);
+		request.setRequestType(NetworkRequest.REQUEST_SEND_FILE);
 		request.setCallback(callback);
 		return request;
 	}
@@ -93,6 +94,7 @@ public class NIOClient {
 		request.setNioPort(host.getNioPort());
 		request.setBuffer(buffer);
 		request.setNeedResponse(true);
+		request.setRequestType(NetworkRequest.REQUEST_READ_FILE);
 		request.setCallback(callback);
 
 		return request;

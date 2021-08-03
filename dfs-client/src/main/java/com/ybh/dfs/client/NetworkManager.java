@@ -62,6 +62,7 @@ public class NetworkManager {
         this.waitingRequests = new ConcurrentHashMap<>();
         this.toSendRequests = new ConcurrentHashMap<>();
         this.finishedResponse = new ConcurrentHashMap<>();
+        this.unfinishedResponse = new ConcurrentHashMap<>();
 
         new NetworkPollThread().start();
         new TimeoutCheckThread().start();
@@ -304,7 +305,7 @@ public class NetworkManager {
                 response = new NetworkResponse();
                 response.setHostname(hostName);
                 response.setRequestId(requestId);
-                response.setError(true);
+                response.setError(false);
                 response.setFinished(false);
             } else {
                response = unfinishedResponse.get(hostName);

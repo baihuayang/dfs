@@ -41,7 +41,11 @@ public class IOThread extends Thread {
         FileOutputStream localFileOut = null;
         FileChannel localFileChannel = null;
         try{
-            localFileOut = new FileOutputStream(request.getAbsoluteFilename());
+
+            String absoluteFilename = getAbsoluteFilename(request.getRelativeFilename());
+            System.out.println("准备写入的文件路径：" + absoluteFilename);
+
+            localFileOut = new FileOutputStream(absoluteFilename);
             localFileChannel = localFileOut.getChannel();
             localFileChannel.position(localFileChannel.size());
             System.out.println("对本地磁盘文件定位到position=" + localFileChannel.size());
@@ -71,7 +75,10 @@ public class IOThread extends Thread {
             File file = new File(request.getAbsoluteFilename());
             Long length = file.length();
 
-            localFileIn = new FileInputStream(request.getAbsoluteFilename());
+            String absoluteFilename = getAbsoluteFilename(request.getRelativeFilename());
+            System.out.println("准备读取的文件路径：" + absoluteFilename);
+
+            localFileIn = new FileInputStream(absoluteFilename);
             localFileChannel = localFileIn.getChannel();
 
             ByteBuffer buffer = ByteBuffer.allocate(8 + length.intValue());
@@ -95,5 +102,22 @@ public class IOThread extends Thread {
                 localFileIn.close();
             }
         }
+    }
+
+    private String getAbsoluteFilename(String relativeFilename) {
+        String[] relativeFilenameSplited = relativeFilename.split("/");
+        String dirPath = DataNodeConfig.DATA_DIR;
+        for(int i=0; i<relativeFilenameSplited.length-1; i++){
+            if( i == 0){
+                continue;
+            }
+            dirPath += "\\" + relativeFilenameSplited[i];
+        }
+        File dir = new File(dirPath);
+        if(!dir.exists()){
+            dir.mkdirs();
+        }
+
+        return dirPath + "\\" + relativeFilenameSplited[relativeFilenameSplited.length-1];
     }
 }

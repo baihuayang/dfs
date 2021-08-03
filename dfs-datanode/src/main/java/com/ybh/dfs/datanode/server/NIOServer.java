@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.nio.channels.*;
 import java.util.*;
 
+import static com.ybh.dfs.datanode.server.DataNodeConfig.DATA_DIR;
 import static com.ybh.dfs.datanode.server.DataNodeConfig.NIO_PORT;
 
 /**
@@ -40,6 +41,7 @@ public class NIOServer extends Thread {
             serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
 
             System.out.println("NIOServer已经启动，开始监听端口：" + NIO_PORT);
+            System.out.println("NIOServer已经启动：路径为" + DATA_DIR);
             NetworkResponseQueues networkResponse = NetworkResponseQueues.get();
             for(int i=0; i<PROCESSOR_THREAD_COUNT; i++) {
                 NIOProcessor processor = new NIOProcessor(i);
